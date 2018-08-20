@@ -1,5 +1,6 @@
 # FeedToMastodon
-CommandLine client to "toot" datafeeds to mastodon
+
+CommandLine client to read datafeeds and "toot" them to a mastodon instance.
 
 ## Status
 
@@ -7,4 +8,8 @@ Very early stages and in progress.
 
 ## Why?
 
-I did not like existing projects available.
+I didn't like the existing projects available.
+
+## License
+
+This software is licensed under the [MIT license](LICENSE).
