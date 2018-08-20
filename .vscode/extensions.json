@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+      "EditorConfig.EditorConfig",
+      "formulahendry.dotnet-test-explorer",
+      "ms-vscode.csharp",
+      "codezombiech.gitignore",
+      "eamodio.gitlens",
+      "pnp.polacode",
+      "wayou.vscode-todo-highlight",
+      "ms-vsliveshare.vsliveshare-pack",
+      "robertohuertasm.vscode-icons"
+    ]
+  }
