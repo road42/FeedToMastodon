@@ -7,10 +7,11 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
-
+using FeedToMastodon.Lib.Interfaces;
 using mastodon;
 using mastodon.Enums;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FeedToMastodon.Cli
 {
@@ -32,7 +33,27 @@ namespace FeedToMastodon.Cli
         public const string APPSITE = "https://github.com/road42/FeedToMastodon";
 
         public static int Main(string[] args)
-            => CommandLineApplication.Execute<Program>(args);
+        {
+            // Create servicecollection with di services
+            // For now "only" with dummyServices
+            var services = new ServiceCollection()
+                .AddSingleton<IAppConfiguration, Lib.Services.Dummy.AppConfiguration>()
+                .AddSingleton<IInstanceService, Lib.Services.Dummy.InstanceService>()
+                .AddSingleton<IFeedService, Lib.Services.Dummy.FeedService>()
+                .AddSingleton<IConsole>(PhysicalConsole.Singleton)
+                .BuildServiceProvider();
+
+            // Create application for configuration
+            var app = new CommandLineApplication<Program>();
+
+            // configure app
+            app.Conventions
+                .UseDefaultConventions()
+                .UseConstructorInjection(services);
+
+            // run and return
+            return app.Execute(args);
+        }
 
         private int OnExecute(CommandLineApplication app, IConsole console)
         {

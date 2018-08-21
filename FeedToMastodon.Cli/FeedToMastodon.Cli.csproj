@@ -11,11 +11,16 @@
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.1.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
     </ItemGroup>
 
     <ItemGroup>
         <None Include="../LICENSE" CopyToOutputDirectory="Always" />
         <None Include="../README.md" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FeedToMastodon.Lib\FeedToMastodon.Lib.csproj" />
     </ItemGroup>
 
 </Project>
