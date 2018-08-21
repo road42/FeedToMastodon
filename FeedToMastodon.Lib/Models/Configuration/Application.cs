@@ -9,7 +9,7 @@ namespace FeedToMastodon.Lib.Models.Configuration
 {
     public class Application {
 
-        public Instance Instance { get; set; }
+        public Instance Instance { get; set; } = new Instance();
 
     }
 }
