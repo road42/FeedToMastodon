@@ -8,8 +8,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using FeedToMastodon.Lib.Interfaces;
-using mastodon;
-using mastodon.Enums;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -42,7 +40,7 @@ namespace FeedToMastodon.Cli
             // Create servicecollection with di services
             // For now "only" with dummyServices
             var services = new ServiceCollection()
-                .AddSingleton<IAppConfiguration, Lib.Services.Dummy.AppConfiguration>()
+                .AddSingleton<IAppConfiguration, Lib.Services.JsonFileConfiguration>()
                 .AddSingleton<IInstanceService, Lib.Services.Dummy.InstanceService>()
                 .AddSingleton<IFeedService, Lib.Services.Dummy.FeedService>()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
@@ -64,7 +62,10 @@ namespace FeedToMastodon.Cli
         private int OnExecute(CommandLineApplication app, IConsole console)
         {
             app.ShowHelp();
+
+            console.ForegroundColor = ConsoleColor.Red;
             console.Error.WriteLine("You must specify a subcommand.\n");
+            console.ResetColor();
 
             return 1;
         }

@@ -29,23 +29,28 @@ namespace FeedToMastodon.Cli.Commands
     )]
     public class RegisterApplication
     {
-#region "Options"
+        #region "Options"
+
+        // Here we define, were to get the configuration from. For now only a filename is supported.
+        [Required(ErrorMessage = "You must specify the connectionString to the configuration data")]
+        [Option(Description = "Location of the configuration", LongName = "configuration", ShortName = "c", ValueName = "STRING")]
+        private string configConnectionString { get; set; }
 
         // The instanceName: we create the Uri with it.
         [Required(ErrorMessage = "You must specify an instance name")]
-        [Option("--instance", Description = "The name of the mastodon instance (without https://)")]
+        [Option(Description = "The name of the mastodon instance (without https://)", LongName = "instance", ShortName = "i", ValueName = "INSTANCE")]
         private string instanceName { get; set; }
 
         // Choose an individual name for the application if you want to
         // use multiple instances.
-        [Option("--appName", Description = "The name used to register this application (optional)")]
+        [Option(Description = "The name used to register this application (optional)", LongName = "appName", ShortName = "n", ValueName = "NAME")]
         private string appName { get; set; } = Program.APPNAME;
 
         // You may set this in mastodon. Not really needed here.
-        [Option("--appSite", Description = "The website of the application (optional)")]
+        [Option(Description = "The website of the application (optional)", LongName = "appSite", ShortName = "s", ValueName = "SITE")]
         private string appSite { get; set; } = Program.APPSITE;
 
-#endregion
+        #endregion
 
         private IAppConfiguration configuration;
         private IInstanceService instanceService;
@@ -60,9 +65,25 @@ namespace FeedToMastodon.Cli.Commands
         }
 
         // If the Options are set and the command should run.
-        private void OnExecute()
+        private int OnExecute(CommandLineApplication app, IConsole console)
         {
-            console.WriteLine($"i: {instanceName} n: {appName} s: {appSite}");
+            if (!configuration.IsValidConnectionString(configConnectionString))
+            {
+                app.ShowHelp();
+                console.Error.WriteLine("Invalid configuration-connectionString");
+                return 1;
+            }
+
+            if (!configuration.InitializeFromConnectionString(configConnectionString))
+            {
+                app.ShowHelp();
+                console.Error.WriteLine("Could not initialize configuration");
+                return 1;
+            }
+
+            console.WriteLine(configuration.GetConfiguration().Instance.Uri);
+
+            console.WriteLine($"c: {configConnectionString} i: {instanceName} n: {appName} s: {appSite}");
             /*
                     TODO: Put to library
                     TODO: Add config file option to write data to
@@ -75,6 +96,9 @@ namespace FeedToMastodon.Cli.Commands
                         var appData = appHandler.CreateAppAsync(ClientName, scopes, Website).Result;
                     }
              */
+            return 0;
         }
+
+
     }
 }
