@@ -15,6 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FeedToMastodon.Cli
 {
+    // Default/Main Command.
+    // Is executed, when no options or commands are given
+    //
+    // Also contains some static default variables
+    // and the registration of dependency injection
     [Command(
         Name = Program.PROGRAMNAME,
         FullName = Program.PROGRAMFULLNAME,
@@ -55,10 +60,12 @@ namespace FeedToMastodon.Cli
             return app.Execute(args);
         }
 
+        // Is executed when no arguments are given.
         private int OnExecute(CommandLineApplication app, IConsole console)
         {
-            console.WriteLine("You must specify a subcommand.");
             app.ShowHelp();
+            console.Error.WriteLine("You must specify a subcommand.\n");
+
             return 1;
         }
     }
