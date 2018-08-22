@@ -47,7 +47,7 @@ namespace FeedToMastodon.Lib.Services.Dummy
             return Task.FromResult(false);
         }
 
-        public Task<bool> RetreiveRefreshToken(string email, string password)
+        public Task<bool> FetchAccessToken(string email, string password)
         {
             // Skip when not registered
             if (
@@ -59,7 +59,7 @@ namespace FeedToMastodon.Lib.Services.Dummy
                 return Task.FromResult(false);
             }
 
-            cfg.GetConfiguration().Instance.RefreshToken = $"refresh-{Guid.NewGuid()}";
+            cfg.GetConfiguration().Instance.AccessToken = $"refresh-{Guid.NewGuid()}";
             cfg.Save();
 
             return Task.FromResult(true);

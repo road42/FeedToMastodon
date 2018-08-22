@@ -97,7 +97,7 @@ namespace FeedToMastodon.Cli.Commands
             }
 
             // No configuration neededs
-            if (registrationResult && !string.IsNullOrWhiteSpace(instanceConfig.RefreshToken))
+            if (registrationResult && !string.IsNullOrWhiteSpace(instanceConfig.AccessToken))
                 Console.WriteLine("- Configuration has already clientCredentials and refreshToken.");
 
             // Is registered check if we need to get a refresh token
@@ -118,7 +118,7 @@ namespace FeedToMastodon.Cli.Commands
             }
 
             // Get Token
-            var tokenResult = await instanceService.RetreiveRefreshToken(email, password);
+            var tokenResult = await instanceService.FetchAccessToken(email, password);
 
             if (tokenResult)
                 console.WriteLine("   - RefreshToken fetched");

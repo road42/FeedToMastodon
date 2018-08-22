@@ -31,7 +31,6 @@ namespace FeedToMastodon.Lib.Services
         // Register the application with a mastodon instance,
         // retreive client-credentials and
         // save them to configuration.
-        // QUESTION: What to do, when there ist already a registration in the configuration?
         public async Task<bool> RegisterApplication(string instance, string appName, string appSite)
         {
             try
@@ -55,7 +54,7 @@ namespace FeedToMastodon.Lib.Services
             return true;
         }
 
-        public async Task<bool> RetreiveRefreshToken(string email, string password)
+        public async Task<bool> FetchAccessToken(string email, string password)
         {
             var instance = cfg.GetConfiguration().Instance;
 
@@ -79,7 +78,7 @@ namespace FeedToMastodon.Lib.Services
                     if (tokenInfo.access_token == null)
                         return false;
 
-                    cfg.GetConfiguration().Instance.RefreshToken = tokenInfo.access_token;
+                    cfg.GetConfiguration().Instance.AccessToken = tokenInfo.access_token;
                     cfg.Save();
                 }
             }

@@ -17,6 +17,6 @@ namespace FeedToMastodon.Lib.Interfaces
     {
         Task<bool> RegisterApplication(string instance, string appName, string appSite);
 
-        Task<bool> RetreiveRefreshToken(string email, string password);
+        Task<bool> FetchAccessToken(string email, string password);
     }
 }

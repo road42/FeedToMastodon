@@ -22,6 +22,6 @@ namespace FeedToMastodon.Lib.Models.Configuration
         public string ClientSecret { get; set; } = string.Empty;
 
         // The refresh token is returned after login with Username, Password, ClientId and ClientSecret
-        public string RefreshToken { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = string.Empty;
     }
 }
