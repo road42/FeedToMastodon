@@ -15,6 +15,6 @@ namespace FeedToMastodon.Lib.Interfaces
      */
     public interface IFeedService
     {
-        Task<bool> Run();
+        Task<bool> Run(bool populateCacheOnly = false);
     }
 }

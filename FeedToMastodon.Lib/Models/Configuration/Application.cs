@@ -13,6 +13,8 @@ namespace FeedToMastodon.Lib.Models.Configuration
     {
         public Instance Instance { get; set; } = new Instance();
 
+        public Cache Cache { get; set; } = new Cache();
+
         public Toot Toot { get; set; } = new Toot();
 
         public List<Feed> Feeds { get; set; } = new List<Feed>();

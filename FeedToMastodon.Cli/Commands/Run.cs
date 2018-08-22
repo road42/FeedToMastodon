@@ -31,6 +31,10 @@ namespace FeedToMastodon.Cli.Commands
     )]
     public class Run
     {
+        // Don't use mastodon prefill cache only
+        [Option(Description = "Prefill cache only. Don't toot to mastodon", LongName = "populateCacheOnly", ShortName = "p")]
+        private bool populateCacheOnly { get; set; } = false;
+
         // Save the services
         private IAppConfiguration cfg;
         private IInstanceService instanceService;
@@ -57,7 +61,7 @@ namespace FeedToMastodon.Cli.Commands
                 return 1;
             }
 
-            var feedResult = await feed.Run();
+            var feedResult = await feed.Run(populateCacheOnly);
 
             return feedResult ? 0 : 1;
         }

@@ -41,6 +41,7 @@ namespace FeedToMastodon.Cli
                 .AddSingleton<Lib.Interfaces.IAppConfiguration, Lib.Services.JsonFileConfiguration>()
                 .AddSingleton<Lib.Interfaces.IInstanceService, Lib.Services.MastodonInstanceService>()
                 .AddSingleton<Lib.Interfaces.IFeedService, Lib.Services.FeedService>()
+                .AddSingleton<Lib.Interfaces.ICacheService, Lib.Services.SqliteCache.SqliteCacheService>()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
                 .BuildServiceProvider();
 

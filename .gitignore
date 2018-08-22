@@ -5,6 +5,7 @@
 
 # ignore config file
 feedtomastodon.cfg.json
+cache.db
 
 # User-specific files
 *.suo

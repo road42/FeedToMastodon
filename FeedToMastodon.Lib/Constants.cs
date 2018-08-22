@@ -5,6 +5,8 @@
     See the LICENSE file in the project root for more information.
 */
 
+using System;
+
 namespace FeedToMastodon.Lib
 {
     public static class Constants
@@ -18,5 +20,11 @@ namespace FeedToMastodon.Lib
 
         public const string DEFAULT_CONFIGCONNECTIONSTRING = "feedtomastodon.cfg.json";
         public const string ENVIRONMENT_CONFIGCONNECTIONSTRING_NAME = "FEEDTOMASTODON_CFG";
+
+        public const int DEFAULT_CACHE_MAXENTRIES = 1000;
+
+        // 30 days
+        public static TimeSpan DEFAULT_CACHE_MAXAGE = new TimeSpan(30, 0, 0, 0);
+        public const string DEFAULT_CACHE_CONNECTIONSTRING = "cache.db";
     }
 }
