@@ -2,11 +2,12 @@
     Copyright (c) 2018 Christoph Jahn.
 
     This file is licensed to you under the MIT license.
-    See the LICENSE.txt file in the project root for more information.
+    See the LICENSE file in the project root for more information.
 */
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -21,20 +22,15 @@ namespace FeedToMastodon.Cli.Commands
     */
     [Command(
         "register",
-        Name = Program.PROGRAMNAME,
-        FullName = Program.PROGRAMFULLNAME,
+        Name = Constants.PROGRAMNAME,
+        FullName = Constants.PROGRAMFULLNAME,
         Description = "Registers the application with a mastodon instance",
-        ExtendedHelpText = Program.EXTENDEDHELPTEXT,
+        ExtendedHelpText = Constants.EXTENDEDHELPTEXT,
         ThrowOnUnexpectedArgument = false
     )]
     public class RegisterApplication
     {
         #region "Options"
-
-        // Here we define, were to get the configuration from. For now only a filename is supported.
-        [Required(ErrorMessage = "You must specify the connectionString to the configuration data")]
-        [Option(Description = "Location of the configuration", LongName = "configuration", ShortName = "c", ValueName = "STRING")]
-        private string configConnectionString { get; set; }
 
         // The instanceName: we create the Uri with it.
         [Required(ErrorMessage = "You must specify an instance name")]
@@ -44,14 +40,15 @@ namespace FeedToMastodon.Cli.Commands
         // Choose an individual name for the application if you want to
         // use multiple instances.
         [Option(Description = "The name used to register this application (optional)", LongName = "appName", ShortName = "n", ValueName = "NAME")]
-        private string appName { get; set; } = Program.APPNAME;
+        private string appName { get; set; } = Constants.APPNAME;
 
         // You may set this in mastodon. Not really needed here.
         [Option(Description = "The website of the application (optional)", LongName = "appSite", ShortName = "s", ValueName = "SITE")]
-        private string appSite { get; set; } = Program.APPSITE;
+        private string appSite { get; set; } = Constants.APPSITE;
 
         #endregion
 
+        // Save the services
         private IAppConfiguration configuration;
         private IInstanceService instanceService;
         private IConsole console;
@@ -64,41 +61,17 @@ namespace FeedToMastodon.Cli.Commands
             this.console = console;
         }
 
-        // If the Options are set and the command should run.
+        // If the options are set and the command should run.
         private int OnExecute(CommandLineApplication app, IConsole console)
         {
-            if (!configuration.IsValidConnectionString(configConnectionString))
+            if (instanceService.RegisterApplication(instanceName, appName, appSite))
             {
-                app.ShowHelp();
-                console.Error.WriteLine("Invalid configuration-connectionString");
-                return 1;
+                console.WriteLine("Application registered");
+                return 0;
             }
 
-            if (!configuration.InitializeFromConnectionString(configConnectionString))
-            {
-                app.ShowHelp();
-                console.Error.WriteLine("Could not initialize configuration");
-                return 1;
-            }
-
-            console.WriteLine(configuration.GetConfiguration().Instance.Uri);
-
-            console.WriteLine($"c: {configConnectionString} i: {instanceName} n: {appName} s: {appSite}");
-            /*
-                    TODO: Put to library
-                    TODO: Add config file option to write data to
-
-                    Example source for registering:
-
-                    using (var appHandler = new AppHandler(InstanceName))
-                    {
-                        var scopes = AppScopeEnum.Write;
-                        var appData = appHandler.CreateAppAsync(ClientName, scopes, Website).Result;
-                    }
-             */
-            return 0;
+            console.WriteLine("Application NOT registered.");
+            return 1;
         }
-
-
     }
 }
