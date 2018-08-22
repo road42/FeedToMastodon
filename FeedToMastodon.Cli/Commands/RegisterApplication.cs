@@ -34,7 +34,6 @@ namespace FeedToMastodon.Cli.Commands
         #region "Options"
 
         // The instanceName: we create the Uri with it.
-        [Required(ErrorMessage = "You must specify an instance name")]
         [Option(Description = "The name of the mastodon instance (without https://)", LongName = "instance", ShortName = "i", ValueName = "INSTANCE")]
         private string instanceName { get; set; }
 
@@ -63,10 +62,19 @@ namespace FeedToMastodon.Cli.Commands
         }
 
         // If the options are set and the command should run.
-        private async Task OnExecuteAsync(CommandLineApplication app, IConsole console)
+        private async Task<int> OnExecuteAsync(CommandLineApplication app, IConsole console)
         {
             var instanceConfig = this.configuration.GetConfiguration().Instance;
             var registrationResult = true;
+
+            // If no instance is registered we need one by parameter
+            if (string.IsNullOrWhiteSpace(instanceConfig.Name) &&
+                string.IsNullOrWhiteSpace(instanceName))
+            {
+                app.ShowHelp();
+                await console.Error.WriteLineAsync("\n- No Instance configured and none given by parameter. Please enter one.");
+                return 1;
+            }
 
             // Check if we need to register
             if (string.IsNullOrWhiteSpace(instanceConfig.Name) ||
@@ -78,43 +86,46 @@ namespace FeedToMastodon.Cli.Commands
                 registrationResult = await instanceService.RegisterApplication(instanceName, appName, appSite);
 
                 if (registrationResult)
+                {
                     console.WriteLine("   - Application registered");
+                }
                 else
+                {
                     await console.Error.WriteLineAsync("   - Application NOT registered.");
+                    return 1;
+                }
             }
+
+            // No configuration neededs
+            if (registrationResult && !string.IsNullOrWhiteSpace(instanceConfig.RefreshToken))
+                Console.WriteLine("- Configuration has already clientCredentials and refreshToken.");
 
             // Is registered check if we need to get a refresh token
-            if (registrationResult && string.IsNullOrWhiteSpace(instanceConfig.RefreshToken))
+            console.WriteLine("- Need to get an initial refreshToken. Your credentials are used to get one (not saved).\n");
+
+            var email = Prompt.GetString("   - Enter your account-email here:",
+                        promptColor: ConsoleColor.DarkGreen);
+
+            var password = Prompt.GetPassword("   - What is your password:",
+                        promptColor: ConsoleColor.Blue);
+
+            // Are two values entered?
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(password))
             {
-                console.WriteLine("- Need to get an initial refreshToken. Your credentials are used to get one (not saved).\n");
-
-                var email = Prompt.GetString("   - Enter your account-email here:",
-                            promptColor: ConsoleColor.White,
-                            promptBgColor: ConsoleColor.DarkGreen);
-
-                var password = Prompt.GetPassword("   - What is your password:",
-                            promptColor: ConsoleColor.White,
-                            promptBgColor: ConsoleColor.DarkBlue);
-
-                if (string.IsNullOrWhiteSpace(email) ||
-                    string.IsNullOrWhiteSpace(password))
-                {
-                    await console.Error.WriteLineAsync("   - You need to enter your account-email and password once.");
-                }
-                else
-                {
-                    var tokenResult = await instanceService.RetreiveRefreshToken(email, password);
-
-                    if (tokenResult)
-                        console.WriteLine("   - RefreshToken fetched");
-                    else
-                        await console.Error.WriteLineAsync("   - NO refreshToken fetched.");
-                }
+                await console.Error.WriteLineAsync("   - You need to enter your account-email and password once.");
+                return 1;
             }
+
+            // Get Token
+            var tokenResult = await instanceService.RetreiveRefreshToken(email, password);
+
+            if (tokenResult)
+                console.WriteLine("   - RefreshToken fetched");
             else
-            {
-                Console.WriteLine("- Configuration has already clientCredentials and refreshToken.");
-            }
+                await console.Error.WriteLineAsync("   - NO refreshToken fetched.");
+
+            return 0;
         }
     }
 }

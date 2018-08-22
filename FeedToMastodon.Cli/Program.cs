@@ -34,7 +34,7 @@ namespace FeedToMastodon.Cli
             // For now "only" with dummyServices
             var services = new ServiceCollection()
                 .AddSingleton<Lib.Interfaces.IAppConfiguration, Lib.Services.JsonFileConfiguration>()
-                .AddSingleton<Lib.Interfaces.IInstanceService, Lib.Services.Dummy.InstanceService>()
+                .AddSingleton<Lib.Interfaces.IInstanceService, Lib.Services.MastodonInstanceService>()
                 .AddSingleton<Lib.Interfaces.IFeedService, Lib.Services.Dummy.FeedService>()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
                 .BuildServiceProvider();
