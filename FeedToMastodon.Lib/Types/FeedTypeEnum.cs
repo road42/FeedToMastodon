@@ -11,6 +11,7 @@ namespace FeedToMastodon.Lib.Models.Configuration
 {
     public enum FeedType
     {
-        RSS
+        RSS,
+        Atom
     }
 }

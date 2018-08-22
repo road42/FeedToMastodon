@@ -118,7 +118,10 @@ namespace FeedToMastodon.Lib.Services
                     var app = new Models.Configuration.Application();
 
                     // serialize JSON to a string and then write string to a file
-                    File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(app, Formatting.Indented));
+                    File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(app, Formatting.Indented,
+                        new JsonSerializerSettings {
+                            NullValueHandling = NullValueHandling.Ignore
+                        }));
                 }
 
                 // Create and configure the ConfigurationBuilder;

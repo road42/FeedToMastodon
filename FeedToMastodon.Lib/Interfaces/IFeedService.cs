@@ -5,6 +5,8 @@
     See the LICENSE.txt file in the project root for more information.
 */
 
+using System.Threading.Tasks;
+
 namespace FeedToMastodon.Lib.Interfaces
 {
     /*
@@ -13,6 +15,6 @@ namespace FeedToMastodon.Lib.Interfaces
      */
     public interface IFeedService
     {
-
+        Task<bool> Run();
     }
 }

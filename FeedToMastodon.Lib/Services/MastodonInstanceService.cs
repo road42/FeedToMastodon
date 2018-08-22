@@ -5,8 +5,11 @@
     See the LICENSE file in the project root for more information.
 */
 
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FeedToMastodon.Lib.Interfaces;
+using FeedToMastodon.Lib.Models;
 using mastodon;
 using mastodon.Enums;
 
@@ -114,6 +117,29 @@ namespace FeedToMastodon.Lib.Services
             }
 
             return false;
+        }
+
+        public async Task<bool> TootFeedEntry(FeedEntry feedEntry, string template = null, StatusVisibilityEnum? visibility = null)
+        {
+            var tootTemplate = template ?? cfg.Application.Toot.Template;
+
+            var sb = new StringBuilder(tootTemplate);
+
+            sb.Replace("{feedname}", feedEntry.FeedTitle);
+            sb.Replace("{id}", feedEntry.Id);
+            sb.Replace("{title}", feedEntry.Title);
+            sb.Replace("{summary}", feedEntry.Summary);
+            sb.Replace("{description}", feedEntry.Description);
+            sb.Replace("{link}", feedEntry.Link);
+            sb.Replace("{published}", feedEntry.Published.ToString(cfg.Application.Toot.DateFormatString));
+            sb.Replace("{lastUpdated}", feedEntry.LastUpdated.ToString(cfg.Application.Toot.DateFormatString));
+
+            foreach (var tag in feedEntry.Tags)
+            {
+                sb.Append($" #{Regex.Replace(tag, "[^\\w]", "").ToLower()}");
+            }
+
+            return await Toot(sb.ToString(), StatusVisibilityEnum.Unlisted);
         }
     }
 }

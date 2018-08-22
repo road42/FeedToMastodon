@@ -17,11 +17,14 @@ namespace FeedToMastodon.Lib.Models.Configuration
     public class Feed
     {
         [Required]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public FeedType Type = FeedType.RSS;
+        public string Name { get; set; } = string.Empty;
 
         [Required]
-        public string ConnectionString = string.Empty;
+        [JsonConverter(typeof(StringEnumConverter))]
+        public FeedType Type { get; set; } = FeedType.RSS;
+
+        [Required]
+        public string ConnectionString { get; set; } = string.Empty;
 
         public Toot Toot { get; set; } = null;
     }

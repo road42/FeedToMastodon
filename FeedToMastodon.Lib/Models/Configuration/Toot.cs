@@ -18,5 +18,7 @@ namespace FeedToMastodon.Lib.Models.Configuration
         public StatusVisibilityEnum Visibiliy { get; set; } = StatusVisibilityEnum.Public;
 
         public string Template { get; set; } = string.Empty;
+
+        public string DateFormatString { get; set; } = string.Empty;
     }
 }

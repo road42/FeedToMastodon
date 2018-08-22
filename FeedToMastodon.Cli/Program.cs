@@ -27,6 +27,7 @@ namespace FeedToMastodon.Cli
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT
     )]
     [Subcommand("register", typeof(Commands.RegisterApplication))]
+    [Subcommand("run", typeof(Commands.Run))]
     [Subcommand("toot", typeof(Commands.Toot))]
     [HelpOption]
     class Program
@@ -36,11 +37,10 @@ namespace FeedToMastodon.Cli
         public static int Main(string[] args)
         {
             // Create servicecollection with di services
-            // For now "only" with dummyServices
             var services = new ServiceCollection()
                 .AddSingleton<Lib.Interfaces.IAppConfiguration, Lib.Services.JsonFileConfiguration>()
                 .AddSingleton<Lib.Interfaces.IInstanceService, Lib.Services.MastodonInstanceService>()
-                .AddSingleton<Lib.Interfaces.IFeedService, Lib.Services.Dummy.FeedService>()
+                .AddSingleton<Lib.Interfaces.IFeedService, Lib.Services.FeedService>()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
                 .BuildServiceProvider();
 
