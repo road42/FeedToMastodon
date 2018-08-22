@@ -7,6 +7,7 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using McMaster.Extensions.CommandLineUtils;
@@ -62,16 +63,58 @@ namespace FeedToMastodon.Cli.Commands
         }
 
         // If the options are set and the command should run.
-        private int OnExecute(CommandLineApplication app, IConsole console)
+        private async Task OnExecuteAsync(CommandLineApplication app, IConsole console)
         {
-            if (instanceService.RegisterApplication(instanceName, appName, appSite))
+            var instanceConfig = this.configuration.GetConfiguration().Instance;
+            var registrationResult = true;
+
+            // Check if we need to register
+            if (string.IsNullOrWhiteSpace(instanceConfig.Name) ||
+                string.IsNullOrWhiteSpace(instanceConfig.ClientId) ||
+                string.IsNullOrWhiteSpace(instanceConfig.ClientSecret))
             {
-                console.WriteLine("Application registered");
-                return 0;
+                console.WriteLine("- Empty client credentials. Need to register app.");
+
+                registrationResult = await instanceService.RegisterApplication(instanceName, appName, appSite);
+
+                if (registrationResult)
+                    console.WriteLine("   - Application registered");
+                else
+                    await console.Error.WriteLineAsync("   - Application NOT registered.");
             }
 
-            console.WriteLine("Application NOT registered.");
-            return 1;
+            // Is registered check if we need to get a refresh token
+            if (registrationResult && string.IsNullOrWhiteSpace(instanceConfig.RefreshToken))
+            {
+                console.WriteLine("- Need to get an initial refreshToken. Your credentials are used to get one (not saved).\n");
+
+                var email = Prompt.GetString("   - Enter your account-email here:",
+                            promptColor: ConsoleColor.White,
+                            promptBgColor: ConsoleColor.DarkGreen);
+
+                var password = Prompt.GetPassword("   - What is your password:",
+                            promptColor: ConsoleColor.White,
+                            promptBgColor: ConsoleColor.DarkBlue);
+
+                if (string.IsNullOrWhiteSpace(email) ||
+                    string.IsNullOrWhiteSpace(password))
+                {
+                    await console.Error.WriteLineAsync("   - You need to enter your account-email and password once.");
+                }
+                else
+                {
+                    var tokenResult = await instanceService.RetreiveRefreshToken(email, password);
+
+                    if (tokenResult)
+                        console.WriteLine("   - RefreshToken fetched");
+                    else
+                        await console.Error.WriteLineAsync("   - NO refreshToken fetched.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("- Configuration has already clientCredentials and refreshToken.");
+            }
         }
     }
 }

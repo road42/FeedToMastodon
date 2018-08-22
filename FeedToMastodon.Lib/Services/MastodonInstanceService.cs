@@ -5,7 +5,10 @@
     See the LICENSE file in the project root for more information.
 */
 
+using System.Threading.Tasks;
 using FeedToMastodon.Lib.Interfaces;
+using mastodon;
+using mastodon.Enums;
 
 namespace FeedToMastodon.Lib.Services
 {
@@ -15,30 +18,76 @@ namespace FeedToMastodon.Lib.Services
     */
     public class MastodonInstanceService : IInstanceService
     {
-        private readonly IAppConfiguration configuration;
+        private readonly IAppConfiguration cfg;
+
+        // We only write 'toot's
+        private readonly AppScopeEnum scopes = AppScopeEnum.Write;
 
         public MastodonInstanceService(IAppConfiguration configuration)
         {
-            this.configuration = configuration;
+            this.cfg = configuration;
         }
 
         // Register the application with a mastodon instance,
         // retreive client-credentials and
         // save them to configuration.
         // QUESTION: What to do, when there ist already a registration in the configuration?
-        public bool RegisterApplication(string instance, string appName, string appSite)
+        public async Task<bool> RegisterApplication(string instance, string appName, string appSite)
         {
-            /*
-                TODO: Add config file option to write data to
-
-                Example source for registering:
-
-                using (var appHandler = new AppHandler(InstanceName))
+            try
+            {
+                using (var appHandler = new AppHandler(instance))
                 {
-                    var scopes = AppScopeEnum.Write;
-                    var appData = appHandler.CreateAppAsync(ClientName, scopes, Website).Result;
+                    var appData = await appHandler.CreateAppAsync(appName, scopes, appSite);
+
+                    cfg.GetConfiguration().Instance.Name = instance;
+                    cfg.GetConfiguration().Instance.ClientId = appData.client_id;
+                    cfg.GetConfiguration().Instance.ClientSecret = appData.client_secret;
+
+                    cfg.Save();
                 }
-             */
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<bool> RetreiveRefreshToken(string email, string password)
+        {
+            var instance = cfg.GetConfiguration().Instance;
+
+            // Skip when not registered
+            if (
+                string.IsNullOrWhiteSpace(instance.Name) ||
+                string.IsNullOrWhiteSpace(instance.ClientId) ||
+                string.IsNullOrWhiteSpace(instance.ClientSecret)
+            )
+            {
+                return false;
+            }
+
+            try
+            {
+                using (var authHandler = new AuthHandler(instance.Name))
+                {
+                    var tokenInfo = await authHandler
+                        .GetTokenInfoAsync(instance.ClientId, instance.ClientSecret, email, password, scopes);
+
+                    if (tokenInfo.access_token == null)
+                        return false;
+
+                    cfg.GetConfiguration().Instance.RefreshToken = tokenInfo.access_token;
+                    cfg.Save();
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
             return true;
         }
     }

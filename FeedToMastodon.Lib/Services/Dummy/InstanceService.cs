@@ -6,6 +6,7 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using FeedToMastodon.Lib.Interfaces;
 
 namespace FeedToMastodon.Lib.Services.Dummy
@@ -26,7 +27,7 @@ namespace FeedToMastodon.Lib.Services.Dummy
             this.cfg = configuration;
         }
 
-        public bool RegisterApplication(string instance, string appName, string appSite)
+        public Task<bool> RegisterApplication(string instance, string appName, string appSite)
         {
             /*
                 Only set the data here and save it.
@@ -34,16 +35,34 @@ namespace FeedToMastodon.Lib.Services.Dummy
             this.appName = appName;
             this.appSite = appSite;
 
-            cfg.GetConfiguration().Instance.Uri = $"https://{instance}";
+            cfg.GetConfiguration().Instance.Name = $"https://{instance}";
 
             // Generate DummyId
             cfg.GetConfiguration().Instance.ClientId = $"DummyId-{Guid.NewGuid()}";
             cfg.GetConfiguration().Instance.ClientSecret = $"DummySecret-{Guid.NewGuid()}";
 
             if (cfg.Save())
-                return true;
+                return Task.FromResult(true);
 
-            return false;
+            return Task.FromResult(false);
+        }
+
+        public Task<bool> RetreiveRefreshToken(string email, string password)
+        {
+            // Skip when not registered
+            if (
+                string.IsNullOrWhiteSpace(cfg.GetConfiguration().Instance.Name) ||
+                string.IsNullOrWhiteSpace(cfg.GetConfiguration().Instance.ClientId) ||
+                string.IsNullOrWhiteSpace(cfg.GetConfiguration().Instance.ClientSecret)
+            )
+            {
+                return Task.FromResult(false);
+            }
+
+            cfg.GetConfiguration().Instance.RefreshToken = $"refresh-{Guid.NewGuid()}";
+            cfg.Save();
+
+            return Task.FromResult(true);
         }
     }
 }
