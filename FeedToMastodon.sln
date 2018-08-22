@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeedToMastodon.Cli", "FeedT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeedToMastodon.Lib", "FeedToMastodon.Lib\FeedToMastodon.Lib.csproj", "{0388CC4E-F894-4523-A22D-6E77C72F51B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeedToMastodon.Tests", "FeedToMastodon.Tests\FeedToMastodon.Tests.csproj", "{BFD7053E-713F-4179-A57F-D806F8272249}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,17 +44,5 @@ Global
 		{0388CC4E-F894-4523-A22D-6E77C72F51B7}.Release|x64.Build.0 = Release|Any CPU
 		{0388CC4E-F894-4523-A22D-6E77C72F51B7}.Release|x86.ActiveCfg = Release|Any CPU
 		{0388CC4E-F894-4523-A22D-6E77C72F51B7}.Release|x86.Build.0 = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|x64.Build.0 = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Debug|x86.Build.0 = Debug|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|x64.ActiveCfg = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|x64.Build.0 = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|x86.ActiveCfg = Release|Any CPU
-		{BFD7053E-713F-4179-A57F-D806F8272249}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

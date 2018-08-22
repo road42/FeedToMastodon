@@ -1,7 +1,6 @@
 {
     "recommendations": [
       "EditorConfig.EditorConfig",
-      "formulahendry.dotnet-test-explorer",
       "ms-vscode.csharp",
       "codezombiech.gitignore",
       "eamodio.gitlens",
