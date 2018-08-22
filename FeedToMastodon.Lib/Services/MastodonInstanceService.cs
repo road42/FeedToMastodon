@@ -39,35 +39,32 @@ namespace FeedToMastodon.Lib.Services
                 {
                     var appData = await appHandler.CreateAppAsync(appName, scopes, appSite);
 
-                    cfg.GetConfiguration().Instance.Name = instance;
-                    cfg.GetConfiguration().Instance.ClientId = appData.client_id;
-                    cfg.GetConfiguration().Instance.ClientSecret = appData.client_secret;
+                    // Save appData
+                    cfg.Application.Instance.Name = instance;
+                    cfg.Application.Instance.ClientId = appData.client_id;
+                    cfg.Application.Instance.ClientSecret = appData.client_secret;
 
                     cfg.Save();
+
+                    return true;
                 }
             }
             catch
             {
-                return false;
             }
 
-            return true;
+            return false;
         }
 
         public async Task<bool> FetchAccessToken(string email, string password)
         {
-            var instance = cfg.GetConfiguration().Instance;
-
             // Skip when not registered
-            if (
-                string.IsNullOrWhiteSpace(instance.Name) ||
-                string.IsNullOrWhiteSpace(instance.ClientId) ||
-                string.IsNullOrWhiteSpace(instance.ClientSecret)
-            )
-            {
+            if (!cfg.ClientCredentialsSaved)
                 return false;
-            }
 
+            var instance = cfg.Application.Instance;
+
+            // Fetch accessToken
             try
             {
                 using (var authHandler = new AuthHandler(instance.Name))
@@ -75,19 +72,48 @@ namespace FeedToMastodon.Lib.Services
                     var tokenInfo = await authHandler
                         .GetTokenInfoAsync(instance.ClientId, instance.ClientSecret, email, password, scopes);
 
+                    // Is null if registration failed (e.g. if two-factor is enabled)
                     if (tokenInfo.access_token == null)
                         return false;
 
-                    cfg.GetConfiguration().Instance.AccessToken = tokenInfo.access_token;
+                    // Save token
+                    cfg.Application.Instance.AccessToken = tokenInfo.access_token;
                     cfg.Save();
+
+                    return true;
                 }
             }
             catch
             {
-                return false;
             }
 
-            return true;
+            return false;
+        }
+
+        public async Task<bool> Toot(string status, StatusVisibilityEnum visibility = StatusVisibilityEnum.Public, int inReplyToId = -1, int[] mediaIds = null, bool sensitive = false, string spoilerText = null)
+        {
+            // Only if configured
+            if (!cfg.FullInstanceRegistrationCompleted)
+                return false;
+
+            var instance = cfg.Application.Instance;
+
+            using (var mastodonClient = new MastodonClient(instance.Name))
+            {
+                var postResult = await mastodonClient
+                    .PostNewStatusAsync(
+                        instance.AccessToken,
+                        status, visibility,
+                        inReplyToId,
+                        mediaIds,
+                        sensitive,
+                        spoilerText);
+
+                if (postResult.created_at != null)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

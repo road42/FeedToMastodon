@@ -12,6 +12,9 @@
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/FeedToMastodon.Cli/bin/Debug/netcoreapp2.1/FeedToMastodon.Cli.dll",
             "args": [],
+            "env": {
+                "FEEDTOMASTODON_CFG" : "../feedtomastodon.cfg.json"
+            },
             "cwd": "${workspaceFolder}/FeedToMastodon.Cli",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",

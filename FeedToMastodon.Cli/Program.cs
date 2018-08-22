@@ -8,6 +8,8 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using FeedToMastodon.Lib;
+using FeedToMastodon.Lib.Interfaces;
+using FeedToMastodon.Lib.Models.Configuration;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,9 +27,12 @@ namespace FeedToMastodon.Cli
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT
     )]
     [Subcommand("register", typeof(Commands.RegisterApplication))]
+    [Subcommand("toot", typeof(Commands.Toot))]
     [HelpOption]
     class Program
     {
+        private readonly IAppConfiguration cfg;
+
         public static int Main(string[] args)
         {
             // Create servicecollection with di services
@@ -49,6 +54,11 @@ namespace FeedToMastodon.Cli
 
             // run and return
             return app.Execute(args);
+        }
+
+        public Program(IAppConfiguration configuration)
+        {
+            this.cfg = configuration;
         }
 
         // Is executed when no arguments are given.

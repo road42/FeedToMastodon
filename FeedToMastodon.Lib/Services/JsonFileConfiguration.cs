@@ -23,12 +23,12 @@ namespace FeedToMastodon.Lib.Services
 
         // Returns the connectionString from environment or
         // the default one
-        private string ConnectionString {
-            get {
-                return Environment
+        private string ConnectionString => Environment
                     .GetEnvironmentVariable(Constants.ENVIRONMENT_CONFIGCONNECTIONSTRING_NAME) ??
                         Constants.DEFAULT_CONFIGCONNECTIONSTRING;
-            }
+
+        private Models.Configuration.Instance instance {
+            get => this.configuration.Instance;
         }
 
         // Read an initialize config
@@ -37,10 +37,50 @@ namespace FeedToMastodon.Lib.Services
             InitializeFromConnectionString();
         }
 
-        public Models.Configuration.Application GetConfiguration()
+        // True if everything is set
+        public bool FullInstanceRegistrationCompleted
         {
-            return configuration?? new Models.Configuration.Application();
+            get
+            {
+                return (
+                    !string.IsNullOrWhiteSpace(instance.Name) &&
+                    !string.IsNullOrWhiteSpace(instance.ClientId) &&
+                    !string.IsNullOrWhiteSpace(instance.ClientSecret) &&
+                    !string.IsNullOrWhiteSpace(instance.AccessToken)
+                );
+            }
         }
+
+        // True if only instanceName is set
+        public bool InstanceSaved
+        {
+            get
+            {
+                return (
+                    !string.IsNullOrWhiteSpace(instance.Name) &&
+                    string.IsNullOrWhiteSpace(instance.ClientId) &&
+                    string.IsNullOrWhiteSpace(instance.ClientSecret) &&
+                    string.IsNullOrWhiteSpace(instance.AccessToken)
+                );
+            }
+        }
+
+        // True if all but accessToken is set
+        public bool ClientCredentialsSaved
+        {
+            get
+            {
+                return (
+                    !string.IsNullOrWhiteSpace(instance.Name) &&
+                    !string.IsNullOrWhiteSpace(instance.ClientId) &&
+                    !string.IsNullOrWhiteSpace(instance.ClientSecret) &&
+                    string.IsNullOrWhiteSpace(instance.AccessToken)
+                );
+            }
+        }
+
+        public Models.Configuration.Application Application =>
+            configuration?? new Models.Configuration.Application();
 
         /*
             Initializes configuration and reads the configfile.
@@ -103,7 +143,13 @@ namespace FeedToMastodon.Lib.Services
         public bool Save()
         {
             try {
-                File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(this.configuration, Formatting.Indented));
+                File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(
+                        this.configuration,
+                        Formatting.Indented,
+                        new JsonSerializerSettings {
+                            NullValueHandling = NullValueHandling.Ignore
+                        }
+                    ));
             } catch {
                 // TODO: UserNotify
                 return false;

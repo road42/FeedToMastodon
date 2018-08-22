@@ -12,8 +12,17 @@ namespace FeedToMastodon.Lib.Interfaces
     */
     public interface IAppConfiguration
     {
+        // True if all instanceData is set
+        bool FullInstanceRegistrationCompleted { get; }
+
+        // True if only a name is given
+        bool InstanceSaved { get; }
+
+        // True if a name, clientId and clientSecret are given
+        bool ClientCredentialsSaved { get; }
+
         // Return the configuration
-        Models.Configuration.Application GetConfiguration();
+        Models.Configuration.Application Application { get; }
 
         // Saves the config to file
         bool Save();
