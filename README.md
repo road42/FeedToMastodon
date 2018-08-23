@@ -1,5 +1,8 @@
 # FeedToMastodon
 
+[![Build Status Develop](https://travis-ci.com/road42/FeedToMastodon.svg?branch=develop)](https://travis-ci.com/road42/FeedToMastodon)
+[![Build Status Master](https://travis-ci.com/road42/FeedToMastodon.svg?branch=master)](https://travis-ci.com/road42/FeedToMastodon)
+
 CommandLine client to read datafeeds and "toot" them to a mastodon instance.
 
 ## Status and todo
