@@ -29,6 +29,7 @@ namespace FeedToMastodon.Cli.Commands
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT,
         ThrowOnUnexpectedArgument = false
     )]
+    [VersionOption(Constants.VERSION)]
     public class Run
     {
         // Don't use mastodon prefill cache only

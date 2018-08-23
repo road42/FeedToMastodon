@@ -29,6 +29,7 @@ namespace FeedToMastodon.Cli
     [Subcommand("register", typeof(Commands.RegisterApplication))]
     [Subcommand("run", typeof(Commands.Run))]
     [Subcommand("toot", typeof(Commands.Toot))]
+    [VersionOption(Constants.VERSION)]
     [HelpOption]
     class Program
     {
