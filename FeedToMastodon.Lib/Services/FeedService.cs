@@ -40,9 +40,9 @@ namespace FeedToMastodon.Lib.Services
             this.cache = cacheService;
         }
 
+        // Fetches every feed and tootes the entries
         public async Task<bool> Run(bool populateCacheOnly = false)
         {
-
             using (log.BeginScope($"{ nameof(FeedService) }->{ nameof(Run) } with populateCacheOnly: {populateCacheOnly}"))
             {
                 if (!cfg.FullInstanceRegistrationCompleted)
@@ -79,16 +79,19 @@ namespace FeedToMastodon.Lib.Services
             return true;
         }
 
+        // Handles RSS2.0 and Atom feeds
         private async Task<bool> HandleXmlFeed(Feed feed, bool populateCacheOnly = false)
         {
             using (log.BeginScope($"{ nameof(FeedService) }->{ nameof(HandleXmlFeed) } with feed: {feed}"))
             {
                 try
                 {
+                    // Create async reader
                     using (XmlReader xmlReader = XmlReader.Create(feed.ConnectionString, new XmlReaderSettings() { Async = true }))
                     {
                         ISyndicationFeedReader reader = null;
 
+                        // Special reader for every type
                         switch (feed.Type)
                         {
                             case FeedType.RSS:
@@ -106,14 +109,17 @@ namespace FeedToMastodon.Lib.Services
 
                         log.LogDebug("Starting feed reading");
 
+                        // Read the entries async
                         while (await reader.Read())
                         {
                             log.LogDebug("Found elementType '{ElementType}'", reader.ElementType);
 
+                            // We only need the entrytypes (yet)
                             if (reader.ElementType == SyndicationElementType.Item)
                             {
                                 FeedEntry feedEntry = null;
 
+                                // Create my feedEntry
                                 switch (feed.Type)
                                 {
                                     case FeedType.RSS:
@@ -130,12 +136,14 @@ namespace FeedToMastodon.Lib.Services
                                         continue;
                                 }
 
+                                // Check if we already had this one
                                 if (await cache.IsCached(feedEntry.Id))
                                 {
                                     log.LogDebug("ID {Id} is in cache", feedEntry.Id);
                                 }
                                 else
                                 {
+                                    // Hand over to instance service
                                     log.LogDebug("Tooting id: {Id} ", feedEntry.Id);
                                     await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
                                 }
@@ -165,6 +173,7 @@ namespace FeedToMastodon.Lib.Services
             return true;
         }
 
+        // AtomEntry conversion
         private FeedEntry CreateFeedEntry(IAtomEntry entry, Feed feed)
         {
             var link = GetLinkFromFeedEntry(entry.Links);
@@ -196,6 +205,7 @@ namespace FeedToMastodon.Lib.Services
             return feedEntry;
         }
 
+        // RSS Feed conversion. RSS has no summary
         private FeedEntry CreateFeedEntry(ISyndicationItem entry, Feed feed)
         {
             var link = GetLinkFromFeedEntry(entry.Links);
@@ -227,6 +237,7 @@ namespace FeedToMastodon.Lib.Services
             return feedEntry;
         }
 
+        // See, if we get a nice link from entry
         private string GetLinkFromFeedEntry(IEnumerable<ISyndicationLink> links)
         {
             var link = links?.First(r => r.RelationshipType == "alternate")?.Uri.ToString();
@@ -240,6 +251,7 @@ namespace FeedToMastodon.Lib.Services
             return link;
         }
 
+        // Sometimes no id is given.
         private string CreateIdFromFeedEntry(FeedEntry entry)
         {
 
