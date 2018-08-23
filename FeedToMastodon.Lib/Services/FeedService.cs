@@ -103,7 +103,9 @@ namespace FeedToMastodon.Lib.Services
                             }
 
                             if (!(await cache.IsCached(feedEntry.Id)))
-                                return await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
+                            {
+                                await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
+                            }
                         }
                     }
                 }
@@ -113,7 +115,7 @@ namespace FeedToMastodon.Lib.Services
 
             }
 
-            return false;
+            return true;
         }
 
         private async Task<bool> TootTheFeedEntry(FeedEntry entry, bool populateCacheOnly, Feed feed)
