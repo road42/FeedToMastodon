@@ -2,7 +2,7 @@
     Copyright (c) 2018 Christoph Jahn.
 
     This file is licensed to you under the MIT license.
-    See the LICENSE.txt file in the project root for more information.
+    See the LICENSE file in the project root for more information.
 */
 
 using System;
@@ -62,7 +62,6 @@ namespace FeedToMastodon.Lib.Services
             return true;
         }
 
-        //TODO: Combine Rss and Atmom feed handling. (Too much copies)
         private async Task<bool> HandleXmlFeed(Feed feed, bool populateCacheOnly = false)
         {
             try
