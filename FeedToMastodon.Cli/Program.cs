@@ -37,8 +37,17 @@ namespace FeedToMastodon.Cli
         private readonly ILogger<Program> log;
         private readonly IAppConfiguration cfg;
 
+        public static bool Debug {
+            get
+            {
+                var debug = Environment.GetEnvironmentVariable("DEBUG");
+                return debug != null && debug.Equals("true", StringComparison.InvariantCultureIgnoreCase);
+            }
+        }
+
         public static int Main(string[] args)
         {
+
             // Create servicecollection with di services
             var services = new ServiceCollection()
                 .AddSingleton<Lib.Interfaces.IAppConfiguration, Lib.Services.JsonFileConfiguration>()
@@ -50,6 +59,9 @@ namespace FeedToMastodon.Cli
                 {
                     // Add console logger
                     log.AddConsole(c => c.IncludeScopes = true);
+
+                    if (Program.Debug)
+                        log.SetMinimumLevel(LogLevel.Debug);
                 })
                 .BuildServiceProvider();
 
