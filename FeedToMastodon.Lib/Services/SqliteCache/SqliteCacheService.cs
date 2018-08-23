@@ -40,6 +40,9 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
 
         public async Task<bool> Cache(string source, string id, DateTime posted)
         {
+            if (posted == null)
+                posted = DateTime.Now;
+
             try
             {
                 var ci = new CachedItem()
