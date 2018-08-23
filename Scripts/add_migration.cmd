@@ -1,0 +1,1 @@
+dotnet ef migrations add --startup-project FeedToMastodon.Cli/FeedToMastodon.Cli.csproj --project FeedToMastodon.Lib/FeedToMastodon.Lib.csproj --context CacheContext --output-dir "Services/SqliteCache/Migration" "Init"
