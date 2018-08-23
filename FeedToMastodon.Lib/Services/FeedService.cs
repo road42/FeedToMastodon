@@ -15,6 +15,7 @@ using System.Xml;
 using FeedToMastodon.Lib.Interfaces;
 using FeedToMastodon.Lib.Models;
 using FeedToMastodon.Lib.Models.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.SyndicationFeed;
 using Microsoft.SyndicationFeed.Atom;
 using Microsoft.SyndicationFeed.Rss;
@@ -26,12 +27,14 @@ namespace FeedToMastodon.Lib.Services
     */
     public class FeedService : Interfaces.IFeedService
     {
+        private readonly ILogger<FeedService> log;
         private readonly IAppConfiguration cfg;
         private readonly IInstanceService instance;
         private readonly ICacheService cache;
 
-        public FeedService(IAppConfiguration configuration, IInstanceService instanceService, ICacheService cacheService)
+        public FeedService(ILogger<FeedService> logger, IAppConfiguration configuration, IInstanceService instanceService, ICacheService cacheService)
         {
+            this.log = logger;
             this.cfg = configuration;
             this.instance = instanceService;
             this.cache = cacheService;
@@ -39,23 +42,37 @@ namespace FeedToMastodon.Lib.Services
 
         public async Task<bool> Run(bool populateCacheOnly = false)
         {
-            if (!cfg.FullInstanceRegistrationCompleted)
-                return false;
 
-            // Work with every feed in source
-            foreach (var feed in cfg.Application?.Feeds)
+            using (log.BeginScope($"{ nameof(FeedService) }->{ nameof(Run) } with populateCacheOnly: {populateCacheOnly}"))
             {
-                // Other types prepared :-)
-                switch (feed.Type)
+                if (!cfg.FullInstanceRegistrationCompleted)
                 {
-                    // RSS2.0 or Atom Feed
-                    case FeedType.RSS:
-                    case FeedType.Atom:
-                        return await HandleXmlFeed(feed, populateCacheOnly);
+                    log.LogError("No instance-configuration found");
+                    return false;
+                }
 
-                    // Anything else is ignored
-                    default:
-                        break;
+                // Exit if no feeds found
+                if (cfg.Application?.Feeds == null || cfg.Application?.Feeds.Count == 0)
+                {
+                    log.LogDebug("No feeds found");
+                    return false;
+                }
+
+                // Work with every feed in source
+                foreach (var feed in cfg.Application?.Feeds)
+                {
+                    // Other types prepared :-)
+                    switch (feed.Type)
+                    {
+                        // RSS2.0 or Atom Feed
+                        case FeedType.RSS:
+                        case FeedType.Atom:
+                            return await HandleXmlFeed(feed, populateCacheOnly);
+
+                        // Anything else is ignored
+                        default:
+                            break;
+                    }
                 }
             }
 
@@ -64,58 +81,76 @@ namespace FeedToMastodon.Lib.Services
 
         private async Task<bool> HandleXmlFeed(Feed feed, bool populateCacheOnly = false)
         {
-            try
+            using (log.BeginScope($"{ nameof(FeedService) }->{ nameof(HandleXmlFeed) } with feed: {feed}"))
             {
-                using (XmlReader xmlReader = XmlReader.Create(feed.ConnectionString, new XmlReaderSettings() { Async = true }))
+                try
                 {
-                    ISyndicationFeedReader reader = null;
-
-                    switch (feed.Type)
+                    using (XmlReader xmlReader = XmlReader.Create(feed.ConnectionString, new XmlReaderSettings() { Async = true }))
                     {
-                        case FeedType.RSS:
-                            reader = new RssFeedReader(xmlReader);
-                            break;
-                        case FeedType.Atom:
-                            reader = new AtomFeedReader(xmlReader);
-                            break;
-                        default:
-                            return false;
-                    }
+                        ISyndicationFeedReader reader = null;
 
-                    while (await reader.Read())
-                    {
-                        if (reader.ElementType == SyndicationElementType.Item)
+                        switch (feed.Type)
                         {
-                            FeedEntry feedEntry = null;
+                            case FeedType.RSS:
+                                log.LogDebug("Creating RssFeedReader");
+                                reader = new RssFeedReader(xmlReader);
+                                break;
+                            case FeedType.Atom:
+                                log.LogDebug("Creating AtomFeedReader");
+                                reader = new AtomFeedReader(xmlReader);
+                                break;
+                            default:
+                                log.LogError("Invalid FeedType found.");
+                                return false;
+                        }
 
-                            switch (feed.Type)
-                            {
-                                case FeedType.RSS:
-                                    ISyndicationItem rssEntry = await (reader as RssFeedReader).ReadItem();
-                                    feedEntry = CreateFeedEntry(rssEntry, feed);
-                                    break;
-                                case FeedType.Atom:
-                                    IAtomEntry atomEntry = await (reader as AtomFeedReader).ReadEntry();
-                                    feedEntry = CreateFeedEntry(atomEntry, feed);
-                                    break;
-                                default:
-                                    continue;
-                            }
+                        log.LogDebug("Starting feed reading");
 
-                            if (!(await cache.IsCached(feedEntry.Id)))
+                        while (await reader.Read())
+                        {
+                            log.LogDebug("Found elementType '{ElementType}'", reader.ElementType);
+
+                            if (reader.ElementType == SyndicationElementType.Item)
                             {
-                                await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
+                                FeedEntry feedEntry = null;
+
+                                switch (feed.Type)
+                                {
+                                    case FeedType.RSS:
+                                        ISyndicationItem rssEntry = await (reader as RssFeedReader).ReadItem();
+                                        log.LogDebug("ISyndicationItem: {Item}", rssEntry);
+                                        feedEntry = CreateFeedEntry(rssEntry, feed);
+                                        break;
+                                    case FeedType.Atom:
+                                        IAtomEntry atomEntry = await (reader as AtomFeedReader).ReadEntry();
+                                        log.LogDebug("IAtomEntry: {Entry}", atomEntry);
+                                        feedEntry = CreateFeedEntry(atomEntry, feed);
+                                        break;
+                                    default:
+                                        continue;
+                                }
+
+                                if (await cache.IsCached(feedEntry.Id))
+                                {
+                                    log.LogDebug("ID {Id} is in cache", feedEntry.Id);
+                                }
+                                else
+                                {
+                                    log.LogDebug("Tooting id: {Id} ", feedEntry.Id);
+                                    await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
+                                }
                             }
                         }
+
+                        return true;
                     }
                 }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, "HandleXmlFeed Exception - {feed}", feed);
+                    return false;
+                }
             }
-            catch
-            {
-
-            }
-
-            return true;
         }
 
         private async Task<bool> TootTheFeedEntry(FeedEntry entry, bool populateCacheOnly, Feed feed)
@@ -207,24 +242,30 @@ namespace FeedToMastodon.Lib.Services
 
         private string CreateIdFromFeedEntry(FeedEntry entry)
         {
-            // Check if there is an id
-            if (entry.Id != null)
-                return entry.Id;
 
-            // Create a new Id
-            var key = $"{entry.FeedTitle}-{entry.Title}-{entry.Link}";
-
-            var mySHA256 = SHA256Managed.Create();
-            var hash = mySHA256.ComputeHash(Encoding.UTF8.GetBytes(key));
-
-            var id = new System.Text.StringBuilder();
-
-            foreach (byte theByte in hash)
+            using (log.BeginScope($"{ nameof(FeedService) }->{ nameof(CreateIdFromFeedEntry) }" + " with entry: {Entry}", entry))
             {
-                id.Append(theByte.ToString("x2"));
-            }
+                // Check if there is an id
+                if (entry.Id != null)
+                    return entry.Id;
 
-            return id.ToString();
+                // Create a new Id
+                var key = $"{entry.FeedTitle}-{entry.Title}-{entry.Link}";
+
+                var mySHA256 = SHA256Managed.Create();
+                var hash = mySHA256.ComputeHash(Encoding.UTF8.GetBytes(key));
+
+                var id = new System.Text.StringBuilder();
+
+                foreach (byte theByte in hash)
+                {
+                    id.Append(theByte.ToString("x2"));
+                }
+
+                log.LogDebug("Created id: {Id} from key: {Key}", id, key);
+
+                return id.ToString();
+            }
         }
     }
 }

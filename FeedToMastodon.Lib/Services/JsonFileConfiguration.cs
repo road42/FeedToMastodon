@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.IO;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace FeedToMastodon.Lib.Services
@@ -20,6 +21,7 @@ namespace FeedToMastodon.Lib.Services
     public class JsonFileConfiguration : Interfaces.IAppConfiguration
     {
         private Models.Configuration.Application configuration = new Models.Configuration.Application();
+        private readonly ILogger<JsonFileConfiguration> log;
 
         // Returns the connectionString from environment or
         // the default one
@@ -27,13 +29,16 @@ namespace FeedToMastodon.Lib.Services
                     .GetEnvironmentVariable(Constants.ENVIRONMENT_CONFIGCONNECTIONSTRING_NAME) ??
                         Constants.DEFAULT_CONFIGCONNECTIONSTRING;
 
-        private Models.Configuration.Instance instance {
+        private Models.Configuration.Instance instance
+        {
             get => this.configuration.Instance;
         }
 
         // Read an initialize config
-        public JsonFileConfiguration()
+        public JsonFileConfiguration(ILogger<JsonFileConfiguration> logger)
         {
+            this.log = logger;
+
             InitializeFromConnectionString();
         }
 
@@ -80,7 +85,7 @@ namespace FeedToMastodon.Lib.Services
         }
 
         public Models.Configuration.Application Application =>
-            configuration?? new Models.Configuration.Application();
+            configuration ?? new Models.Configuration.Application();
 
         /*
             Initializes configuration and reads the configfile.
@@ -88,77 +93,101 @@ namespace FeedToMastodon.Lib.Services
         */
         private bool InitializeFromConnectionString()
         {
-            // No need to check if empty
-            if (string.IsNullOrEmpty(ConnectionString))
-                return false;
-
-            // Create fileInformation object from name
-            // the file does not have to exist to do this.
-            System.IO.FileInfo fileInfo = null;
-
-            // Try to initialize fileInfo
-            try
+            using (log.BeginScope($"{ nameof(JsonFileConfiguration) }->{ nameof(InitializeFromConnectionString) }"))
             {
-                // Create fileInfo ... this will fail on invalid filenames
-                fileInfo = new FileInfo(ConnectionString);
-            }
-            // catch exceptions so fileInfo stays null
-            catch (Exception) { }
+                log.LogDebug("ConnectionString: '{ConnectionString}'", ConnectionString);
 
-            // false if fileInfo is null
-            if (fileInfo == null)
-                return false;
+                // No need to check if empty
+                if (string.IsNullOrEmpty(ConnectionString))
+                    return false;
 
-            // Now initialize and read the file
-            try
-            {
-                // Configuration file does not exist yet => create it from empty cfg-object
-                if (!fileInfo.Exists)
+                // Create fileInformation object from name
+                // the file does not have to exist to do this.
+                System.IO.FileInfo fileInfo = null;
+
+                // Try to initialize fileInfo
+                try
                 {
-                    var app = new Models.Configuration.Application();
+                    // Create fileInfo ... this will fail on invalid filenames
+                    fileInfo = new FileInfo(ConnectionString);
+                }
+                // catch exceptions so fileInfo stays null
+                catch (Exception) { }
 
-                    // serialize JSON to a string and then write string to a file
-                    File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(app, Formatting.Indented,
-                        new JsonSerializerSettings {
-                            NullValueHandling = NullValueHandling.Ignore
-                        }));
+                // false if fileInfo is null
+                if (fileInfo == null)
+                {
+                    log.LogError("Invalid configFileName given.");
+                    return false;
                 }
 
-                // Create and configure the ConfigurationBuilder;
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile(fileInfo.FullName, false, true);
+                // Now initialize and read the file
+                try
+                {
+                    // Configuration file does not exist yet => create it from empty cfg-object
+                    if (!fileInfo.Exists)
+                    {
+                        log.LogDebug("Creating new file");
+                        var app = new Models.Configuration.Application();
 
-                // Read the file and bind to configuration-object
-                builder
-                    .Build()
-                    .Bind(this.configuration);
+                        // serialize JSON to a string and then write string to a file
+                        File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(app, Formatting.Indented,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            }));
+                    }
 
-            } catch (Exception ex) {
-                Console.WriteLine(ex.Message);
-                // TODO: Give error to user, without implementing parts of CommandLineClass in Lib
-                return false;
+                    // Create and configure the ConfigurationBuilder;
+                    var builder = new ConfigurationBuilder()
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile(fileInfo.FullName, false, true);
+
+                    // Read the file and bind to configuration-object
+                    log.LogDebug("Execute configuationBuilder");
+
+                    builder
+                        .Build()
+                        .Bind(this.configuration);
+
+                }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, "Initialize configFile: '{connectionString}'.", ConnectionString);
+                    return false;
+                }
+
+                return true;
             }
-
-            return true;
         }
 
+        // Writes the file to disk
         public bool Save()
         {
-            try {
-                File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(
-                        this.configuration,
-                        Formatting.Indented,
-                        new JsonSerializerSettings {
-                            NullValueHandling = NullValueHandling.Ignore
-                        }
-                    ));
-            } catch {
-                // TODO: UserNotify
-                return false;
-            }
+            using (log.BeginScope($"{ nameof(JsonFileConfiguration) }->{ nameof(Save) }"))
+            {
+                try
+                {
+                    log.LogDebug("Writing configFile: '{ConnectionString}'", ConnectionString);
 
-            return true;
+                    // Just serialize and write
+                    File.WriteAllText(ConnectionString, JsonConvert.SerializeObject(
+                            this.configuration,
+                            Formatting.Indented,
+                            new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            }
+                        ));
+                }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, "Saving configFile: '{ConnectionString}'", ConnectionString);
+                    return false;
+                }
+
+                return true;
+            }
         }
     }
 }
