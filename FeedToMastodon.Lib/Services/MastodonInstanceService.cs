@@ -124,7 +124,6 @@ namespace FeedToMastodon.Lib.Services
             var tootTemplate = template ?? cfg.Application.Toot.Template;
             var tootVisibility = visibility ?? cfg.Application.Toot.Visibiliy;
 
-StatusVisibilityEnum.
             var sb = new StringBuilder(tootTemplate);
 
             sb.Replace("{feedname}", feedEntry.FeedTitle);
