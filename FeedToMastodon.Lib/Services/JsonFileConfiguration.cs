@@ -144,7 +144,7 @@ namespace FeedToMastodon.Lib.Services
                         .AddJsonFile(fileInfo.FullName, false, true);
 
                     // Read the file and bind to configuration-object
-                    log.LogDebug("Execute configuationBuilder");
+                    log.LogDebug("Execute configurationBuilder");
 
                     builder
                         .Build()
