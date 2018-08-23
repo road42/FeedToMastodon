@@ -27,6 +27,6 @@ namespace FeedToMastodon.Lib
         public static TimeSpan DEFAULT_CACHE_MAXAGE = new TimeSpan(30, 0, 0, 0);
         public const string DEFAULT_CACHE_CONNECTIONSTRING = "cache.db";
 
-        public const string VERSION = "0.1.1";
+        public const string VERSION = "0.2.0";
     }
 }

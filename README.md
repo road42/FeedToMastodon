@@ -2,34 +2,41 @@
 
 CommandLine client to read datafeeds and "toot" them to a mastodon instance.
 
-## Status
+## Status and todo
 
-### Done
+- [x] Can read RSS2.0 and Atom feeds
+- [x] Can communicate with mastodon server
+- [x] Publishes the feeds to mastodon
+- [x] Works with `windows/linux/osx` (and any other platform `dotnet core 2.1` runs)
+- [x] Communicate errors to user -> Logging on display
+- [ ] Use logfiles
+- [ ] Nice documentation (for now just quick documented)
+- [ ] Command for creating an `exampleConfigFile`
+- [ ] Implement cache cleaning
+- [ ] Support RSS1.0
 
-- Can read RSS2.0 and Atom feeds
-- Can communicate with mastodon server
-- Publishes the feeds to mastodon
-- Works with `windows/linux/osx` (and any other platform `dotnet core 2.1` runs)
-
-### Todo
-
-- Communicate errors to user
-- Use logfiles
-- Document usage (for now just quick documented)
-
-## Requirements
-
-### Run the software
+## Requirements and download
 
 - You need nothing preinstalled to run the software.
 - The [releases](https://github.com/road42/FeedToMastodon/releases) are self contained and should not
   need any runtime.
+- Download, unpack, configure, use
 
-### Change and compile
+## Help? Bugs? Errors? But-I-Want-ToHaves!
 
-- At least `dotnet core sdk 2.1`
+I want to provide some help if you get errors or have feature requests. Create an issue, if you
+have bugs. Provide as much information there as possible. Please don't include your clientId,clientSecret oder tokens.
+
+I created an account for this: [@feedtomastodon@road42.social](mastodon://@feedtomastodon@road42.social) write me there.
 
 ## How-to use
+
+### Step 0: Environment variables
+
+There are two environment variables:
+
+1. `DEBUG=true` is optional and tells the client to output debugLogs
+2. `FEEDTOMASTODON_CFG` is **important**. This is the location of your `configFile`
 
 ### First step - configfile location
 
@@ -37,6 +44,10 @@ Think about where to put your config file. Default is "feedtomastodon.cfg.json" 
 folder.
 
 If you want to change this set an environment variable called `FEEDTOMASTODON_CFG` to the relative or absolute name.
+
+Protect and secure this file!
+
+#### Example for Linux/MacOs
 
 ```bash
 export FEEDTOMASTODON_CFG="/home/<user>/.feedtomastodon.cfg.json"
@@ -49,7 +60,7 @@ FeedToMastodon.Cli register --instance example.social
 ```
 
 You will have to enter the email-address and the passwort of the
-account you want to use once. You must disable Two-factor-auth for this. After the application-registration you may and should enable it agein.
+account you want to use once. You must disable twofactor-authentication for this. After the application registration you may and should enable it again.
 
 This command creates the `configFile`, registers the application with the instance and create an `accessToken` for later use.
 
@@ -112,9 +123,9 @@ Valid values are:
 - `Unlisted`
 - `Private`
 
-#### DateFormaString
+#### DateFormatString
 
-May contain everything from `DateTime.ToString()` in `dotNet`
+May contain everything from `DateTime.ToString()` in [dotNet](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)
 
 ### Fourth step - Add feeds
 
@@ -183,7 +194,11 @@ FeedToMastodon.Cli run
 
 ## Why?
 
-I the existing projects available didn't solve my problems and I had some spare time.
+The existing projects available didn't solve my problems and I had some spare time.
+
+## But, why dotNet?
+
+Because I can.
 
 ## License
 

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Logging;
 
 namespace FeedToMastodon.Cli.Commands
 {
@@ -47,6 +48,8 @@ namespace FeedToMastodon.Cli.Commands
         [Option(Description = "The website of the application (optional)", LongName = "appSite", ShortName = "s", ValueName = "SITE")]
         private string appSite { get; set; } = Constants.APPSITE;
 
+        private readonly ILogger<RegisterApplication> log;
+
         #endregion
 
         // Save the services
@@ -55,87 +58,91 @@ namespace FeedToMastodon.Cli.Commands
         private IConsole console;
 
         // The required services are injected. Registration is in Program.cs
-        public RegisterApplication(IAppConfiguration configuration, IInstanceService instanceService, IConsole console)
+        public RegisterApplication(ILogger<RegisterApplication> logger, IAppConfiguration configuration, IInstanceService instanceService, IConsole console)
         {
+            this.log = logger;
             this.cfg = configuration;
             this.instanceService = instanceService;
             this.console = console;
         }
 
         // If the options are set and the command should run.
-        private async Task<int> OnExecuteAsync(CommandLineApplication app, IConsole console)
+        private async Task<int> OnExecuteAsync(CommandLineApplication app)
         {
-            // No configuration needed
-            if (cfg.FullInstanceRegistrationCompleted)
+            using (log.BeginScope($"{ nameof(RegisterApplication) }->{ nameof(OnExecuteAsync) }"))
             {
-                console.WriteLine("- Configuration has already ClientCredentials and AccessToken.");
+                log.LogDebug("CommandLineParameters: i:\"{instanceName}\" n:\"{appName}\" s:\"{appSite}\"", instanceName, appName, appSite);
+
+                // No configuration needed
+                if (cfg.FullInstanceRegistrationCompleted)
+                {
+                    log.LogDebug("Application is already configured");
+                    console.WriteLine("Configuration has already ClientCredentials and AccessToken.");
+                    return 0;
+                }
+
+                // If no instance is registered we need one by parameter
+                if (!cfg.InstanceSaved &&
+                    string.IsNullOrWhiteSpace(instanceName))
+                {
+                    log.LogDebug("No Instance configured and none given by parameter.");
+                    console.Error.WriteLine("No Instance configured and none given by parameter.");
+                    return 1;
+                }
+
+                // Check if we need to register
+                if (!cfg.ClientCredentialsSaved)
+                {
+                    log.LogDebug("Empty client credentials.");
+                    console.WriteLine("Empty client credentials. Need to register app.");
+
+                    if (await instanceService.RegisterApplication(instanceName, appName, appSite))
+                    {
+                        console.WriteLine($"Application on instance {instanceName} registered.");
+                    }
+                    else
+                    {
+                        console.Error.WriteLine($"Error while registering appliction on instance {instanceName}.");
+                        return 1;
+                    }
+                }
+
+                if (!cfg.FullInstanceRegistrationCompleted)
+                {
+                    // Is registered check if we need to get a refresh token
+                    log.LogDebug("AccessToken missing. Getting one.");
+                    console.WriteLine("Need to get an initial accessToken. Your credentials are used to get one (not saved). Enshure two-factor authentication is disabled during registration.");
+
+                    var email = Prompt.GetString("   - Enter your account-email here:",
+                                promptColor: ConsoleColor.DarkGreen);
+
+                    var password = Prompt.GetPassword("   - What is your password:",
+                                promptColor: ConsoleColor.Blue);
+
+                    // Are two values entered?
+                    if (string.IsNullOrWhiteSpace(email) ||
+                        string.IsNullOrWhiteSpace(password))
+                    {
+                        log.LogError($"Error: You need to enter your account-email and password.");
+                        return 1;
+                    }
+
+                    // Get Token
+                    var tokenResult = await instanceService.FetchAccessToken(email, password);
+
+                    if (tokenResult)
+                    {
+                        log.LogError($"Success: AccessToken fetched. Registration complete.");
+                    }
+                    else
+                    {
+                        log.LogError($"Error: No AccessToken fetched. Enter correct credentials and enshure two-factor authentication is disabled during registration.");
+                        return 1;
+                    }
+                }
+
                 return 0;
             }
-
-            var instanceConfig = this.cfg.Application.Instance;
-            var registrationResult = true;
-
-            // If no instance is registered we need one by parameter
-            if (!cfg.InstanceSaved &&
-                string.IsNullOrWhiteSpace(instanceName))
-            {
-                app.ShowHelp();
-                await console.Error.WriteLineAsync("\n- No Instance configured and none given by parameter. Please enter one.\n");
-                return 1;
-            }
-
-            // Check if we need to register
-            if (!cfg.ClientCredentialsSaved)
-            {
-                console.WriteLine("- Empty client credentials. Need to register app.");
-
-                registrationResult = await instanceService.RegisterApplication(instanceName, appName, appSite);
-
-                if (registrationResult)
-                {
-                    console.WriteLine("   - Application registered");
-                }
-                else
-                {
-                    await console.Error.WriteLineAsync("   - Application NOT registered.");
-                    return 1;
-                }
-            }
-
-            if (!cfg.FullInstanceRegistrationCompleted)
-            {
-                // Is registered check if we need to get a refresh token
-                console.WriteLine("- Need to get an initial refreshToken. Your credentials are used to get one (not saved).\n");
-
-                var email = Prompt.GetString("   - Enter your account-email here:",
-                            promptColor: ConsoleColor.DarkGreen);
-
-                var password = Prompt.GetPassword("   - What is your password:",
-                            promptColor: ConsoleColor.Blue);
-
-                // Are two values entered?
-                if (string.IsNullOrWhiteSpace(email) ||
-                    string.IsNullOrWhiteSpace(password))
-                {
-                    await console.Error.WriteLineAsync("   - You need to enter your account-email and password once.");
-                    return 1;
-                }
-
-                // Get Token
-                var tokenResult = await instanceService.FetchAccessToken(email, password);
-
-                if (tokenResult)
-                {
-                    console.WriteLine("   - RefreshToken fetched");
-                }
-                else
-                {
-                    await console.Error.WriteLineAsync("   - NO refreshToken fetched.");
-                    return 1;
-                }
-            }
-
-            return 0;
         }
     }
 }

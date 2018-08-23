@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Logging;
 
 namespace FeedToMastodon.Cli.Commands
 {
@@ -35,20 +36,22 @@ namespace FeedToMastodon.Cli.Commands
         #region "Options"
 
         // The instanceName: we create the Uri with it.
-        [Required(ErrorMessage = "No need to give a status message")]
+        [Required(ErrorMessage = "You need to give a status message")]
         [Option(Description = "The status to toot", LongName = "toot", ShortName = "t", ValueName = "STATUS")]
         private string status { get; set; }
 
         #endregion
 
         // Save the services
-        private IAppConfiguration cfg;
-        private IInstanceService instanceService;
-        private IConsole console;
+        private readonly ILogger<Toot> log;
+        private readonly IAppConfiguration cfg;
+        private readonly IInstanceService instanceService;
+        private readonly IConsole console;
 
         // The required services are injected. Registration is in Program.cs
-        public Toot(IAppConfiguration configuration, IInstanceService instanceService, IConsole console)
+        public Toot(ILogger<Toot> logger, IAppConfiguration configuration, IInstanceService instanceService, IConsole console)
         {
+            this.log = logger;
             this.cfg = configuration;
             this.instanceService = instanceService;
             this.console = console;
@@ -57,17 +60,22 @@ namespace FeedToMastodon.Cli.Commands
         // If the options are set and the command should run.
         private async Task<int> OnExecuteAsync(CommandLineApplication app, IConsole console)
         {
-            // No configuration needed
-            if (!cfg.FullInstanceRegistrationCompleted)
+            using (log.BeginScope($"{ nameof(Toot) }->{ nameof(OnExecuteAsync) }"))
             {
-                app.ShowHelp();
-                console.Error.WriteLine("\n- Not configured yet");
-                return 1;
+                log.LogDebug("CommandLineParameters: t:\"{status}\"", status);
+                // No configuration needed
+                if (!cfg.FullInstanceRegistrationCompleted)
+                {
+                    log.LogError("No instance-configuration found.");
+                    app.ShowHelp();
+                    console.Error.WriteLine("Not configured yet");
+                    return 1;
+                }
+
+                var tootResult = await instanceService.Toot(status);
+
+                return tootResult ? 0 : 1;
             }
-
-            var tootResult = await instanceService.Toot(status);
-
-            return tootResult ? 0 : 1;
         }
     }
 }

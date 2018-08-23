@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using McMaster.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Logging;
 
 namespace FeedToMastodon.Cli.Commands
 {
@@ -36,35 +37,42 @@ namespace FeedToMastodon.Cli.Commands
         [Option(Description = "Prefill cache only. Don't toot to mastodon", LongName = "populateCacheOnly", ShortName = "p")]
         private bool populateCacheOnly { get; set; } = false;
 
+        private readonly ILogger<Run> log;
+
         // Save the services
         private IAppConfiguration cfg;
-        private IInstanceService instanceService;
         private IConsole console;
         private IFeedService feed;
 
         // The required services are injected. Registration is in Program.cs
-        public Run(IFeedService feed, IAppConfiguration configuration, IInstanceService instanceService, IConsole console)
+        public Run(ILogger<Run> logger, IFeedService feed, IAppConfiguration configuration, IConsole console)
         {
+            this.log = logger;
             this.cfg = configuration;
-            this.instanceService = instanceService;
             this.console = console;
             this.feed = feed;
         }
 
         // If the options are set and the command should run.
-        private async Task<int> OnExecuteAsync(CommandLineApplication app, IConsole console)
+        private async Task<int> OnExecuteAsync(CommandLineApplication app)
         {
-            // No configuration needed
-            if (!cfg.FullInstanceRegistrationCompleted)
+            using (log.BeginScope($"{ nameof(Run) }->{ nameof(OnExecuteAsync) }"))
             {
-                app.ShowHelp();
-                console.Error.WriteLine("\n- Not configured yet");
-                return 1;
+                log.LogDebug("CommandLineParameters: p:\"{populateCacheOnly}\"", populateCacheOnly);
+
+                // No configuration needed
+                if (!cfg.FullInstanceRegistrationCompleted)
+                {
+                    log.LogError("No instance-registration found.");
+                    app.ShowHelp();
+                    console.Error.WriteLine("Not configured yet");
+                    return 1;
+                }
+
+                var feedResult = await feed.Run(populateCacheOnly);
+
+                return feedResult ? 0 : 1;
             }
-
-            var feedResult = await feed.Run(populateCacheOnly);
-
-            return feedResult ? 0 : 1;
         }
     }
 }

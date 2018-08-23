@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using FeedToMastodon.Lib.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace FeedToMastodon.Lib.Services.SqliteCache
 {
@@ -18,61 +19,96 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
     */
     public class SqliteCacheService : Interfaces.ICacheService
     {
+        private readonly ILogger<SqliteCacheService> log;
         private readonly IAppConfiguration cfg;
         private readonly CacheContext db;
 
-        public SqliteCacheService(IAppConfiguration configuration)
+        private bool IsInitialized { get; set; } = false;
+
+        public SqliteCacheService(ILogger<SqliteCacheService> logger, IAppConfiguration configuration)
         {
+            this.log = logger;
             this.cfg = configuration;
 
-            var cacheConnectionString = cfg.Application.Cache.ConnectionString?.Trim() ??
-                    Constants.DEFAULT_CACHE_CONNECTIONSTRING;
+            using (log.BeginScope($"{ nameof(SqliteCacheService) }->{ nameof(SqliteCacheService) }"))
+            {
+                var cacheConnectionString = cfg.Application.Cache.ConnectionString?.Trim() ??
+                        Constants.DEFAULT_CACHE_CONNECTIONSTRING;
 
-            var builder = new DbContextOptionsBuilder<CacheContext>();
-            builder.UseSqlite($"Data Source={cacheConnectionString}");
-            this.db = new CacheContext(builder.Options);
-            this.db.Database.EnsureCreated();
+                log.LogDebug("ConnectionString: {ConnectionString}", cacheConnectionString);
 
-            // TODO: Cleanup TimeSpan
-            // TODO: Cleanup MaxAge
+                try
+                {
+                    var builder = new DbContextOptionsBuilder<CacheContext>();
+                    builder.UseSqlite($"Data Source={cacheConnectionString}");
+                    this.db = new CacheContext(builder.Options);
+                    this.db.Database.EnsureCreated();
 
+                    // TODO: Cleanup TimeSpan
+                    // TODO: Cleanup MaxAge
+
+                    IsInitialized = true;
+                }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, $"{ nameof(SqliteCacheService) } - Exception");
+                }
+            }
         }
 
         public async Task<bool> Cache(string source, string id, DateTime posted)
         {
-            if (posted == null)
-                posted = DateTime.Now;
-
-            try
+            using (log.BeginScope($"{ nameof(SqliteCacheService) }->{ nameof(Cache) }"))
             {
-                var ci = new CachedItem()
+                log.LogDebug("Caching id: {id}", id);
+
+                if (!IsInitialized)
+                    return false;
+
+                if (posted == null)
+                    posted = DateTime.Now;
+
+                try
                 {
-                    Id = id,
-                    Published = posted
-                };
+                    var ci = new CachedItem()
+                    {
+                        Id = id,
+                        Published = posted
+                    };
 
-                db.CachedItems.Add(ci);
-                await db.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine ("Cache: " + ex.Message);
-                return false;
-            }
+                    db.CachedItems.Add(ci);
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Cache: " + ex.Message);
+                    return false;
+                }
 
-            return true;
+                return true;
+            }
         }
 
         public async Task<bool> IsCached(string id)
         {
-            var result = db.CachedItems.Where(c => c.Id == id);
-
-            if ((await result.CountAsync()) > 0)
+            using (log.BeginScope($"{ nameof(SqliteCacheService) }->{ nameof(IsCached) }"))
             {
-                return true;
-            }
+                log.LogDebug("Checking cache for id: {id}", id);
 
-            return false;
+                if (!IsInitialized)
+                    return false;
+
+                var result = db.CachedItems.Where(c => c.Id == id);
+
+                if ((await result.CountAsync()) > 0)
+                {
+                    log.LogDebug("Found");
+                    return true;
+                }
+
+                log.LogDebug("Not found");
+                return false;
+            }
         }
     }
 }
