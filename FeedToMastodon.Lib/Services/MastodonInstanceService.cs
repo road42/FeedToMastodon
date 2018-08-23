@@ -122,7 +122,9 @@ namespace FeedToMastodon.Lib.Services
         public async Task<bool> TootFeedEntry(FeedEntry feedEntry, string template = null, StatusVisibilityEnum? visibility = null)
         {
             var tootTemplate = template ?? cfg.Application.Toot.Template;
+            var tootVisibility = visibility ?? cfg.Application.Toot.Visibiliy;
 
+StatusVisibilityEnum.
             var sb = new StringBuilder(tootTemplate);
 
             sb.Replace("{feedname}", feedEntry.FeedTitle);
@@ -139,7 +141,7 @@ namespace FeedToMastodon.Lib.Services
                 sb.Append($" #{Regex.Replace(tag, "[^\\w]", "").ToLower()}");
             }
 
-            return await Toot(sb.ToString(), StatusVisibilityEnum.Unlisted);
+            return await Toot(sb.ToString(), tootVisibility);
         }
     }
 }
