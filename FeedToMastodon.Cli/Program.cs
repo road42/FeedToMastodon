@@ -12,6 +12,7 @@ using FeedToMastodon.Lib.Interfaces;
 using FeedToMastodon.Lib.Models.Configuration;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace FeedToMastodon.Cli
 {
@@ -33,6 +34,7 @@ namespace FeedToMastodon.Cli
     [HelpOption]
     class Program
     {
+        private readonly ILogger<Program> log;
         private readonly IAppConfiguration cfg;
 
         public static int Main(string[] args)
@@ -44,6 +46,11 @@ namespace FeedToMastodon.Cli
                 .AddSingleton<Lib.Interfaces.IFeedService, Lib.Services.FeedService>()
                 .AddSingleton<Lib.Interfaces.ICacheService, Lib.Services.SqliteCache.SqliteCacheService>()
                 .AddSingleton<IConsole>(PhysicalConsole.Singleton)
+                .AddLogging(log =>
+                {
+                    // Add console logger
+                    log.AddConsole(c => c.IncludeScopes = true);
+                })
                 .BuildServiceProvider();
 
             // Create application for configuration
@@ -55,24 +62,30 @@ namespace FeedToMastodon.Cli
                 .UseConstructorInjection(services);
 
             // run and return
-            return app.Execute(args);
+            var result = app.Execute(args);
+            services.Dispose();
+            return result;
         }
 
-        public Program(IAppConfiguration configuration)
+        public Program(ILogger<Program> logger, IAppConfiguration configuration)
         {
+            this.log = logger;
             this.cfg = configuration;
         }
 
         // Is executed when no arguments are given.
         private int OnExecute(CommandLineApplication app, IConsole console)
         {
-            app.ShowHelp();
+            using (log.BeginScope($"{ nameof(Program) }->{ nameof(OnExecute) }"))
+            {
+                app.ShowHelp();
 
-            console.ForegroundColor = ConsoleColor.Red;
-            console.Error.WriteLine("You must specify a subcommand.\n");
-            console.ResetColor();
+                console.ForegroundColor = ConsoleColor.Red;
+                console.Error.WriteLine("You must specify a subcommand.\n");
+                console.ResetColor();
 
-            return 1;
+                return 1;
+            }
         }
     }
 }
