@@ -70,7 +70,7 @@ namespace FeedToMastodon.Lib.Services
                             var handleResult = await HandleXmlFeed(feed, populateCacheOnly);
 
                             if (handleResult == false)
-                                LogError("Handling feed {feed} failed.", feed);
+                                log.LogError("Handling feed {feed} failed.", feed);
                             break;
                         // Anything else is ignored
                         default:
