@@ -132,7 +132,7 @@ namespace FeedToMastodon.Cli.Commands
 
                     if (tokenResult)
                     {
-                        log.LogError($"Success: AccessToken fetched. Registration complete.");
+                        log.LogDebug($"Success: AccessToken fetched. Registration complete.");
                     }
                     else
                     {
