@@ -67,8 +67,11 @@ namespace FeedToMastodon.Lib.Services
                         // RSS2.0 or Atom Feed
                         case FeedType.RSS:
                         case FeedType.Atom:
-                            return await HandleXmlFeed(feed, populateCacheOnly);
+                            var handleResult = await HandleXmlFeed(feed, populateCacheOnly);
 
+                            if (handleResult == false)
+                                log.LogError("Handling feed {feed} failed.", feed);
+                            break;
                         // Anything else is ignored
                         default:
                             break;
