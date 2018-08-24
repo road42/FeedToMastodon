@@ -4,9 +4,9 @@
 #  - FeedToMastodon.Lib/Constants.cs
 #  - FeedToMastodon.Cli/FeedToMastodon.Cli.csproj
 
-rm -f ./FeedToMastodon-linux-x64-0.2.1.tar.gz
-rm -f ./FeedToMastodon-win-x64-0.2.1.zip
-rm -f ./FeedToMastodon-osx-x64-0.2.1.zip
+rm -f ./FeedToMastodon-linux-x64-*.tar.gz
+rm -f ./FeedToMastodon-win-x64-*.zip
+rm -f ./FeedToMastodon-osx-x64-*.zip
 
 dotnet publish -c Release -r linux-x64
 dotnet publish -c Release -r win-x64
@@ -21,6 +21,6 @@ zip -r FeedToMastodon-win-x64-0.2.1.zip FeedToMastodon-win-x64-0.2.1/
 zip -r FeedToMastodon-osx-x64-0.2.1.zip FeedToMastodon-osx-x64-0.2.1/
 
 
-rm -rf ./FeedToMastodon-linux-x64-0.2.1
-rm -rf ./FeedToMastodon-win-x64-0.2.1
-rm -rf ./FeedToMastodon-osx-x64-0.2.1
+rm -rf ./FeedToMastodon-linux-x64-*
+rm -rf ./FeedToMastodon-win-x64-*
+rm -rf ./FeedToMastodon-osx-x64-*
