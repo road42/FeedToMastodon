@@ -7,16 +7,7 @@ CommandLine client to read datafeeds and "toot" them to a mastodon instance.
 
 ## Status and todo
 
-- [x] Can read RSS2.0 and Atom feeds
-- [x] Can communicate with mastodon server
-- [x] Publishes the feeds to mastodon
-- [x] Works with `windows/linux/osx` (and any other platform `dotnet core 2.1` runs)
-- [x] Communicate errors to user -> Logging on display
-- [ ] Use logfiles
-- [ ] Nice documentation (for now just quick documented)
-- [ ] Command for creating an `exampleConfigFile`
-- [ ] Implement cache cleaning
-- [ ] Support RSS1.0
+See [issues](https://github.com/road42/FeedToMastodon/labels/enhancement)
 
 ## Requirements and download
 
@@ -33,6 +24,8 @@ have bugs. Provide as much information there as possible. Please don't include y
 I created an account for this: [@feedtomastodon@road42.social](mastodon://@feedtomastodon@road42.social) write me there.
 
 ## How-to use
+
+- [Logging](docs/Logging.md)
 
 ### Step 0: Environment variables
 
