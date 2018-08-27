@@ -40,8 +40,11 @@ namespace FeedToMastodon.Lib.Services
         // save them to configuration.
         public async Task<bool> RegisterApplication(string instance, string appName, string appSite)
         {
-            using (log.BeginScope($"{ nameof(MastodonInstanceService) }->{ nameof(RegisterApplication) } with instance: {instance}, appName: {appName}, appSite: {appSite}"))
+            using (log.BeginScope($"{ nameof(MastodonInstanceService) }->{ nameof(RegisterApplication) }"))
             {
+                log.LogDebug("Parameters: {instance}, appName: {appName}, appSite: {appSite}",
+                    instance, appName, appSite);
+
                 try
                 {
                     log.LogDebug("Create mastodon-AppHandler");
