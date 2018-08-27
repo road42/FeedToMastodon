@@ -10,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 using FeedToMastodon.Lib;
 using FeedToMastodon.Lib.Interfaces;
 using FeedToMastodon.Lib.Models.Configuration;
+using Serilog;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -59,11 +60,22 @@ namespace FeedToMastodon.Cli
                 {
                     // Add console logger
                     log.AddConsole(c => c.IncludeScopes = true);
+                    log.AddSerilog();
 
                     if (Program.Debug)
                         log.SetMinimumLevel(LogLevel.Debug);
                 })
                 .BuildServiceProvider();
+
+            var cfg = services.GetService<IAppConfiguration>();
+
+            // Initialize serilog logger
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(cfg.ConfigurationRoot)
+                .Enrich.WithEnvironmentUserName()
+                .Enrich.WithMachineName()
+                .Enrich.FromLogContext()
+                .CreateLogger();
 
             // Create application for configuration
             var app = new CommandLineApplication<Program>();

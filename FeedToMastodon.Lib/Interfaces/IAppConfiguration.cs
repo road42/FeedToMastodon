@@ -5,6 +5,8 @@
     See the LICENSE file in the project root for more information.
 */
 
+using Microsoft.Extensions.Configuration;
+
 namespace FeedToMastodon.Lib.Interfaces
 {
     /*
@@ -26,5 +28,7 @@ namespace FeedToMastodon.Lib.Interfaces
 
         // Saves the config to file
         bool Save();
+
+        IConfigurationRoot ConfigurationRoot { get; }
     }
 }
