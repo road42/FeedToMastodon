@@ -24,8 +24,6 @@ namespace FeedToMastodon.Cli.Commands
     */
     [Command(
         "run",
-        Name = Constants.PROGRAMNAME,
-        FullName = Constants.PROGRAMFULLNAME,
         Description = "Fetches all feeds an \"toot\"s them.",
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT,
         ThrowOnUnexpectedArgument = false

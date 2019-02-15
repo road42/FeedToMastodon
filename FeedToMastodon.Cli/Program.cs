@@ -28,9 +28,9 @@ namespace FeedToMastodon.Cli
         Description = "Pushes datafeeds to mastodon.",
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT
     )]
-    [Subcommand("register", typeof(Commands.RegisterApplication))]
-    [Subcommand("run", typeof(Commands.Run))]
-    [Subcommand("toot", typeof(Commands.Toot))]
+    [Subcommand(typeof(Commands.RegisterApplication))]
+    [Subcommand(typeof(Commands.Run))]
+    [Subcommand(typeof(Commands.Toot))]
     [VersionOption(Constants.VERSION)]
     [HelpOption]
     class Program
