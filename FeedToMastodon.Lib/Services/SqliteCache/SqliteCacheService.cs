@@ -44,9 +44,6 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
                     this.db = new CacheContext(builder.Options);
                     this.db.Database.EnsureCreated();
 
-                    // TODO: Cleanup TimeSpan
-                    // TODO: Cleanup MaxAge
-
                     IsInitialized = true;
                 }
                 catch (Exception ex)
@@ -54,6 +51,36 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
                     log.LogError(ex, $"{ nameof(SqliteCacheService) } - Exception");
                 }
             }
+        }
+
+        public async Task<bool> CleanupEntries()
+        {
+            try
+            {
+                // Cleanup outdated entries
+                var agedDate = DateTime.Now - cfg.Application.Cache.MaxAge;
+                var agedEntries = db.CachedItems.Where(i => i.Published < agedDate);
+                db.CachedItems.RemoveRange(agedEntries);
+                await db.SaveChangesAsync();
+
+                // Cleanup MaxEntries
+                var entriesExceededMaxEntries = db
+                        .CachedItems
+                        .OrderBy(i => i.Published)
+                        .Skip(cfg.Application.Cache.MaxEntries);
+                db.RemoveRange(entriesExceededMaxEntries);
+                await db.SaveChangesAsync();
+
+                // VACUUM File
+                await db.Database.ExecuteSqlCommandAsync("VACUUM");
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "CleanupEntries");
+                return false;
+            }
+
+            return true;
         }
 
         public async Task<bool> Cache(string source, string id, DateTime posted)

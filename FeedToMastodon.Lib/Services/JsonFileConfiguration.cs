@@ -22,6 +22,7 @@ namespace FeedToMastodon.Lib.Services
     {
         private Models.Configuration.Application configuration = new Models.Configuration.Application();
         private readonly ILogger<JsonFileConfiguration> log;
+        private IConfigurationRoot configurationRoot;
 
         // Returns the connectionString from environment or
         // the default one
@@ -87,6 +88,12 @@ namespace FeedToMastodon.Lib.Services
         public Models.Configuration.Application Application =>
             configuration ?? new Models.Configuration.Application();
 
+        public IConfigurationRoot ConfigurationRoot {
+            get {
+                return configurationRoot;
+            }
+        }
+
         /*
             Initializes configuration and reads the configfile.
             If the configfile does not exist a new one is created.
@@ -146,9 +153,13 @@ namespace FeedToMastodon.Lib.Services
                     // Read the file and bind to configuration-object
                     log.LogDebug("Execute configurationBuilder");
 
-                    builder
-                        .Build()
+                    configurationRoot = builder
+                        .Build();
+
+                    configurationRoot
                         .Bind(this.configuration);
+
+                        configurationRoot.GetSection("");
 
                 }
                 catch (Exception ex)

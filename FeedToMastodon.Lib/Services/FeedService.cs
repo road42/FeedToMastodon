@@ -77,6 +77,10 @@ namespace FeedToMastodon.Lib.Services
                             break;
                     }
                 }
+
+                // Cleanup Cache
+                if (!await cache.CleanupEntries())
+                    log.LogError("Cache cleanup failed.");
             }
 
             return true;

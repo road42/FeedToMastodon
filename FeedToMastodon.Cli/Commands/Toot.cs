@@ -24,8 +24,6 @@ namespace FeedToMastodon.Cli.Commands
     */
     [Command(
         "toot",
-        Name = Constants.PROGRAMNAME,
-        FullName = Constants.PROGRAMFULLNAME,
         Description = "Toots a status message",
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT,
         ThrowOnUnexpectedArgument = false

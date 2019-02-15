@@ -18,5 +18,7 @@ namespace FeedToMastodon.Lib.Interfaces
         Task<bool> IsCached(string id);
 
         Task<bool> Cache(string source, string id, DateTime posted);
+
+        Task<bool> CleanupEntries();
     }
 }

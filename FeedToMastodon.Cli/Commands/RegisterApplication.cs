@@ -24,8 +24,6 @@ namespace FeedToMastodon.Cli.Commands
     */
     [Command(
         "register",
-        Name = Constants.PROGRAMNAME,
-        FullName = Constants.PROGRAMFULLNAME,
         Description = "Registers the application with a mastodon instance",
         ExtendedHelpText = Constants.EXTENDEDHELPTEXT,
         ThrowOnUnexpectedArgument = false
