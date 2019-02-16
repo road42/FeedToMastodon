@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/FeedToMastodon.Cli/bin/Debug/netcoreapp2.1/FeedToMastodon.Cli.dll",
+            "program": "${workspaceFolder}/FeedToMastodon.Cli/bin/Debug/netcoreapp2.2/FeedToMastodon.Cli.dll",
             "args": [ "run", "-p" ],
             "env": {
                 "FEEDTOMASTODON_CFG" : "../feedtomastodon.cfg.json"

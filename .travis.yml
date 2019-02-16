@@ -1,6 +1,6 @@
 language: csharp
 solution: FeedToMastodon.sln
-dotnet: 2.1.401
+dotnet: 2.2.103
 script:
  - dotnet restore
  - dotnet build

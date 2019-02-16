@@ -146,12 +146,17 @@ namespace FeedToMastodon.Lib.Services
                                 // Check if we already had this one
                                 if (await cache.IsCached(feedEntry.Id))
                                 {
-                                    log.LogDebug("ID {Id} is in cache", feedEntry.Id);
+                                    log.LogDebug("ID '{Id}' is in cache", feedEntry.Id);
+                                }
+                                // Check if the entry is older then MaxAge to prevent double posting
+                                else if (feedEntry?.Published <= (DateTime.Now - cfg.Application.Cache.MaxAge) )
+                                {
+                                    log.LogInformation("Entry '{Id}' is too old.", feedEntry.Id);
                                 }
                                 else
                                 {
                                     // Hand over to instance service
-                                    log.LogDebug("Tooting id: {Id} ", feedEntry.Id);
+                                    log.LogDebug("Tooting id '{Id}' ", feedEntry.Id);
                                     await TootTheFeedEntry(feedEntry, populateCacheOnly, feed);
                                 }
                             }
@@ -171,8 +176,12 @@ namespace FeedToMastodon.Lib.Services
         private async Task<bool> TootTheFeedEntry(FeedEntry entry, bool populateCacheOnly, Feed feed)
         {
             // Toot if wanted
-            if (!populateCacheOnly && !(await instance.TootFeedEntry(entry, feed?.Toot?.Template, feed?.Toot?.Visibiliy)))
-                return false;
+            if (!populateCacheOnly)
+            {
+                var tootResult = await instance.TootFeedEntry(entry, feed?.Toot?.Template, feed?.Toot?.Visibiliy);
+                if (!tootResult)
+                    return false;
+            }
 
             // Cache the entry
             await cache.Cache(feed.Name, entry.Id, entry.Published.DateTime);
