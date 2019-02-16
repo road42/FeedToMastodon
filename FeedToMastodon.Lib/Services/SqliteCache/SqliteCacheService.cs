@@ -22,7 +22,6 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
         private readonly ILogger<SqliteCacheService> log;
         private readonly IAppConfiguration cfg;
         private readonly CacheContext db;
-
         private bool IsInitialized { get; set; } = false;
 
         public SqliteCacheService(ILogger<SqliteCacheService> logger, IAppConfiguration configuration)
@@ -55,32 +54,34 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
 
         public async Task<bool> CleanupEntries()
         {
-            try
+            using (log.BeginScope($"{ nameof(SqliteCacheService) }->{ nameof(CleanupEntries) }"))
             {
-                // Cleanup outdated entries
-                var agedDate = DateTime.Now - cfg.Application.Cache.MaxAge;
-                var agedEntries = db.CachedItems.Where(i => i.Published < agedDate);
-                db.CachedItems.RemoveRange(agedEntries);
-                await db.SaveChangesAsync();
+                try
+                {
+                    // Cleanup outdated entries
+                    var agedDate = DateTime.Now - cfg.Application.Cache.MaxAge;
+                    var agedEntries = db.CachedItems.Where(i => i.Published < agedDate);
+                    db.CachedItems.RemoveRange(agedEntries);
+                    log.LogInformation($"Cleanup AgedEntries: {agedEntries.Count()} items removed");
+                    await db.SaveChangesAsync();
 
-                // Cleanup MaxEntries
-                var entriesExceededMaxEntries = db
-                        .CachedItems
-                        .OrderBy(i => i.Published)
-                        .Skip(cfg.Application.Cache.MaxEntries);
-                db.RemoveRange(entriesExceededMaxEntries);
-                await db.SaveChangesAsync();
+                    // Cleanup MaxEntries
+                    var entriesExceededMaxEntries = db
+                            .CachedItems
+                            .OrderByDescending(i => i.Published)
+                            .Skip(cfg.Application.Cache.MaxEntries);
+                    db.RemoveRange(entriesExceededMaxEntries);
+                    log.LogInformation($"Cleanup MaxEntries: {entriesExceededMaxEntries.Count()} items removed");
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    log.LogError(ex, "CleanupEntries");
+                    return false;
+                }
 
-                // VACUUM File
-                await db.Database.ExecuteSqlCommandAsync("VACUUM");
+                return true;
             }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "CleanupEntries");
-                return false;
-            }
-
-            return true;
         }
 
         public async Task<bool> Cache(string source, string id, DateTime posted)
@@ -90,25 +91,26 @@ namespace FeedToMastodon.Lib.Services.SqliteCache
                 log.LogDebug("Caching id: {id}", id);
 
                 if (!IsInitialized)
+                {
+                    log.LogDebug("Not IsInitialized");
                     return false;
-
-                if (posted == null)
-                    posted = DateTime.Now;
+                }
 
                 try
                 {
                     var ci = new CachedItem()
                     {
                         Id = id,
-                        Published = posted
+                        Published = DateTime.Now
                     };
 
                     db.CachedItems.Add(ci);
-                    await db.SaveChangesAsync();
+                    var result = await db.SaveChangesAsync();
+                    log.LogDebug($"Cache savereult: {result}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Cache: " + ex.Message);
+                    log.LogError(ex, "Cannot cache entry {id}.");
                     return false;
                 }
 
